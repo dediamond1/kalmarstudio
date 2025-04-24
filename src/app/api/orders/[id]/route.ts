@@ -9,8 +9,7 @@ export async function GET(
   try {
     await connectToDB();
     const order = await OrderModel.findById(params.id)
-      .populate('customer')
-      .populate('items.product');
+      .populate('customer');
 
     if (!order) {
       return NextResponse.json(
@@ -23,16 +22,24 @@ export async function GET(
       success: true,
       data: {
         id: order._id.toString(),
-        customer: order.customer,
+        customer: {
+          id: order.customer._id.toString(),
+          name: order.customer.name,
+          email: order.customer.email,
+          phone: order.customer.phone,
+          company: order.customer.company
+        },
         items: order.items,
         status: order.status,
         dueDate: order.dueDate,
         payment: order.payment,
+        design: order.design,
         createdAt: order.createdAt,
         updatedAt: order.updatedAt
       }
     });
   } catch (error) {
+    console.error('Failed to fetch order:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch order' },
       { status: 500 }
@@ -52,13 +59,37 @@ export async function PUT(
       params.id,
       body,
       { new: true }
-    ).populate('customer').populate('items.product');
+    ).populate('customer');
+
+    if (!updatedOrder) {
+      return NextResponse.json(
+        { success: false, error: 'Order not found' },
+        { status: 404 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      data: updatedOrder
+      data: {
+        id: updatedOrder._id.toString(),
+        customer: {
+          id: updatedOrder.customer._id.toString(),
+          name: updatedOrder.customer.name,
+          email: updatedOrder.customer.email,
+          phone: updatedOrder.customer.phone,
+          company: updatedOrder.customer.company
+        },
+        items: updatedOrder.items,
+        status: updatedOrder.status,
+        dueDate: updatedOrder.dueDate,
+        payment: updatedOrder.payment,
+        design: updatedOrder.design,
+        createdAt: updatedOrder.createdAt,
+        updatedAt: updatedOrder.updatedAt
+      }
     });
   } catch (error) {
+    console.error('Failed to update order:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to update order' },
       { status: 500 }
@@ -72,13 +103,21 @@ export async function DELETE(
 ) {
   try {
     await connectToDB();
-    await OrderModel.findByIdAndDelete(params.id);
+    const deletedOrder = await OrderModel.findByIdAndDelete(params.id);
+
+    if (!deletedOrder) {
+      return NextResponse.json(
+        { success: false, error: 'Order not found' },
+        { status: 404 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
       data: { id: params.id }
     });
   } catch (error) {
+    console.error('Failed to delete order:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to delete order' },
       { status: 500 }

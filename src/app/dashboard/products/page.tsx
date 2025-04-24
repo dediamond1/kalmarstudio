@@ -20,7 +20,6 @@ import {
 import { MoreHorizontal, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
@@ -31,35 +30,34 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import Link from "next/link";
+import { Product } from "@/types/product";
 
-import type { Order } from "@/types/order";
-
-export default function OrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
+export default function ProductsPage() {
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
+  const [productToDelete, setProductToDelete] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchOrders();
+    fetchProducts();
   }, []);
 
-  const fetchOrders = async () => {
+  const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/orders");
+      const response = await fetch("/api/products");
       const result = await response.json();
 
       if (!result.success) {
-        throw new Error(result.error || "Failed to fetch orders");
+        throw new Error(result.error || "Failed to fetch products");
       }
 
-      setOrders(result.data);
+      setProducts(result.data);
     } catch (error) {
-      console.error("Error fetching orders:", error);
+      console.error("Error fetching products:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to fetch orders"
+        error instanceof Error ? error.message : "Failed to fetch products"
       );
     } finally {
       setLoading(false);
@@ -68,63 +66,42 @@ export default function OrdersPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      const response = await fetch(`/api/orders/${id}`, {
+      const response = await fetch(`/api/products/${id}`, {
         method: "DELETE",
       });
 
       const result = await response.json();
 
       if (!result.success) {
-        throw new Error(result.error || "Failed to delete order");
+        throw new Error(result.error || "Failed to delete product");
       }
 
-      setOrders(orders.filter((order) => order.id !== id));
-      toast.success("Order deleted successfully");
+      setProducts(products.filter((product) => product.id !== id));
+      toast.success("Product deleted successfully");
     } catch (error: unknown) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to delete order"
+        error instanceof Error ? error.message : "Failed to delete product"
       );
     }
   };
 
-  const filteredOrders = orders.filter((order) => {
+  const filteredProducts = products.filter((product) => {
     if (!searchQuery) return true;
 
     const searchLower = searchQuery.toLowerCase();
     return (
-      order.customer.name.toLowerCase().includes(searchLower) ||
-      order.customer.email.toLowerCase().includes(searchLower) ||
-      order.id.toLowerCase().includes(searchLower) ||
-      order.status.toLowerCase().includes(searchLower)
+      product.name.toLowerCase().includes(searchLower) ||
+      product.description.toLowerCase().includes(searchLower) ||
+      product.category?.toLowerCase().includes(searchLower)
     );
   });
-
-  // Map status to appropriate badge variant
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case "Completed":
-        return "secondary";
-      case "Processing":
-        return "default";
-      case "Shipped":
-        return "outline";
-      case "Pending":
-        return "warning";
-      case "Cancelled":
-        return "destructive";
-      default:
-        return "outline";
-    }
-  };
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Orders</h1>
-          <p className="text-muted-foreground">
-            Manage and track your customer orders
-          </p>
+          <h1 className="text-2xl font-bold">Products</h1>
+          <p className="text-muted-foreground">Manage your product catalog</p>
         </div>
 
         <div className="flex gap-2 w-full md:w-auto">
@@ -132,16 +109,16 @@ export default function OrdersPage() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search orders..."
+              placeholder="Search products..."
               className="pl-8"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <Button asChild>
-            <Link href="/dashboard/orders/new">
+            <Link href="/dashboard/products/new">
               <Plus className="mr-2 h-4 w-4" />
-              New Order
+              New Product
             </Link>
           </Button>
         </div>
@@ -151,15 +128,15 @@ export default function OrdersPage() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-center py-8">
-              <p>Loading orders...</p>
+              <p>Loading products...</p>
             </div>
           </CardContent>
         </Card>
-      ) : filteredOrders.length === 0 ? (
+      ) : filteredProducts.length === 0 ? (
         <Card>
           <CardContent className="p-6">
             <div className="flex flex-col items-center justify-center py-8 space-y-4 text-center">
-              <p className="text-muted-foreground">No orders found</p>
+              <p className="text-muted-foreground">No products found</p>
               {searchQuery && (
                 <p className="text-sm text-muted-foreground">
                   Try adjusting your search query
@@ -167,9 +144,9 @@ export default function OrdersPage() {
               )}
               {!searchQuery && (
                 <Button asChild>
-                  <Link href="/dashboard/orders/new">
+                  <Link href="/dashboard/products/new">
                     <Plus className="mr-2 h-4 w-4" />
-                    Create your first order
+                    Create your first product
                   </Link>
                 </Button>
               )}
@@ -181,45 +158,33 @@ export default function OrdersPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Order ID</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Items</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Sizes</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Due Date</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredOrders.map((order) => (
+              {filteredProducts.map((product) => (
                 <TableRow
-                  key={order.id}
+                  key={product.id}
                   className="cursor-pointer hover:bg-muted/50"
                 >
-                  <TableCell className="font-mono text-xs">
-                    #{order.id.substring(0, 8)}
-                  </TableCell>
                   <TableCell>
-                    <div className="font-medium">{order.customer.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {order.customer.email}
+                    <div className="font-medium">{product.name}</div>
+                    <div className="text-xs text-muted-foreground line-clamp-1">
+                      {product.description}
                     </div>
                   </TableCell>
+                  <TableCell>${product.basePrice.toFixed(2)}</TableCell>
+                  <TableCell>{product.category || "Uncategorized"}</TableCell>
+                  <TableCell>{product.availableSizes.join(", ")}</TableCell>
                   <TableCell>
-                    {order.items.length === 1
-                      ? typeof order.items[0].product === "string"
-                        ? order.items[0].product
-                        : order.items[0].product?.name || "Unknown"
-                      : `${order.items.length} items`}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusBadgeVariant(order.status) as any}>
-                      {order.status}
+                    <Badge variant={product.isActive ? "default" : "outline"}>
+                      {product.isActive ? "Active" : "Inactive"}
                     </Badge>
-                  </TableCell>
-                  <TableCell>${order.payment.total.toFixed(2)}</TableCell>
-                  <TableCell>
-                    {format(new Date(order.dueDate), "MMM d, yyyy")}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -234,12 +199,12 @@ export default function OrdersPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/orders/${order.id}`}>
+                          <Link href={`/dashboard/products/${product.id}`}>
                             View details
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/orders/${order.id}/edit`}>
+                          <Link href={`/dashboard/products/${product.id}/edit`}>
                             Edit
                           </Link>
                         </DropdownMenuItem>
@@ -247,7 +212,7 @@ export default function OrdersPage() {
                           className="text-destructive focus:text-destructive"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setOrderToDelete(order.id);
+                            setProductToDelete(product.id);
                             setDeleteConfirmOpen(true);
                           }}
                         >
@@ -269,8 +234,8 @@ export default function OrdersPage() {
           <DialogHeader>
             <DialogTitle>Confirm Deletion</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this order? This action cannot be
-              undone.
+              Are you sure you want to delete this product? This action cannot
+              be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -283,8 +248,8 @@ export default function OrdersPage() {
             <Button
               variant="destructive"
               onClick={() => {
-                if (orderToDelete) {
-                  handleDelete(orderToDelete);
+                if (productToDelete) {
+                  handleDelete(productToDelete);
                   setDeleteConfirmOpen(false);
                 }
               }}

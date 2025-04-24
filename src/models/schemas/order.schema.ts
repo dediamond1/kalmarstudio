@@ -1,41 +1,113 @@
-import { Schema, model } from 'mongoose';
-const OrderStatus = ['Pending', 'Paid', 'Refunded'] as const;
+import { Schema, model, models } from 'mongoose';
+
+// Define enum values for order status and payment status
+const OrderStatus = ['Pending', 'Processing', 'Completed', 'Shipped', 'Cancelled'] as const;
+const PaymentStatus = ['Pending', 'Paid', 'Refunded'] as const;
 
 const OrderItemSchema = new Schema({
-  product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
-  quantity: { type: Number, required: true },
-  size: { type: String, required: true },
-  color: { type: String, required: true },
-  material: { type: String, required: true },
-  printType: { type: String, required: true },
-  unitPrice: { type: Number, required: true }
+  product: { 
+    type: Schema.Types.Mixed, 
+    required: true 
+  },
+  quantity: { 
+    type: Number, 
+    required: true, 
+    min: 1 
+  },
+  size: { 
+    type: String, 
+    required: true 
+  },
+  color: { 
+    type: String, 
+    default: 'Default' 
+  },
+  material: { 
+    type: String, 
+    default: 'Cotton' 
+  },
+  printType: { 
+    type: String, 
+    default: 'Digital' 
+  },
+  price: { 
+    type: Number, 
+    required: true, 
+    min: 0 
+  }
 });
 
-const DesignDetailsSchema = new Schema({
-  description: { type: String, required: true },
-  placement: { type: String },
-  colors: [{ type: String }],
-  mockupUrl: { type: String },
-  artworkFiles: [{ type: String }]
+const DesignSchema = new Schema({
+  description: { 
+    type: String,
+    required: true 
+  },
+  placement: { 
+    type: String, 
+    default: 'Front Center' 
+  },
+  colors: [{ 
+    type: String 
+  }],
+  mockupUrl: { 
+    type: String 
+  }
 });
 
-const PaymentDetailsSchema = new Schema({
-  status: { type: String, enum: ['Pending', 'Paid', 'Refunded'], default: 'Pending' },
-  method: { type: String, required: true },
-  amount: { type: Number, required: true },
-  tax: { type: Number, required: true },
-  discount: { type: Number },
-  total: { type: Number, required: true }
+const PaymentSchema = new Schema({
+  status: { 
+    type: String, 
+    enum: PaymentStatus, 
+    default: 'Pending' 
+  },
+  method: { 
+    type: String, 
+    default: 'Credit Card' 
+  },
+  amount: { 
+    type: Number, 
+    required: true, 
+    min: 0 
+  },
+  tax: { 
+    type: Number, 
+    default: 0 
+  },
+  discount: { 
+    type: Number, 
+    default: 0 
+  },
+  total: { 
+    type: Number, 
+    required: true, 
+    min: 0 
+  }
 });
 
 const OrderSchema = new Schema({
-  customer: { type: Schema.Types.ObjectId, ref: 'Customer', required: true },
-  status: { type: String, enum: OrderStatus, default: 'Pending' },
+  customer: { 
+    type: Schema.Types.ObjectId, 
+    ref: 'Customer', 
+    required: true 
+  },
   items: [OrderItemSchema],
-  design: DesignDetailsSchema,
-  dueDate: { type: Date, required: true },
-  payment: PaymentDetailsSchema,
-  notes: { type: String }
-}, { timestamps: true });
+  design: DesignSchema,
+  status: { 
+    type: String, 
+    enum: OrderStatus, 
+    default: 'Pending' 
+  },
+  dueDate: { 
+    type: Date, 
+    required: true 
+  },
+  payment: PaymentSchema,
+  notes: { 
+    type: String 
+  }
+}, { 
+  timestamps: true 
+});
 
-export const OrderModel = model('Order', OrderSchema);
+// Use existing model if available to prevent OverwriteModelError
+export const OrderModel = models.Order || model('Order', OrderSchema);

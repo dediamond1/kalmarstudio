@@ -1,8 +1,11 @@
 export interface OrderItem {
-  product: string;
+  product: string | { name: string };
   size: string;
   quantity: number;
   price: number;
+  color?: string;
+  material?: string;
+  printType?: string;
 }
 
 export interface OrderDesign {
@@ -32,9 +35,10 @@ export interface Order {
   };
   design?: OrderDesign;
   items: OrderItem[];
-  status: "Pending" | "Paid" | "Refunded";
+  status: "Pending" | "Processing" | "Completed" | "Shipped" | "Cancelled";
   dueDate: string;
   payment: OrderPayment;
+  notes?: string;
   createdAt: string;
   updatedAt: string;
 }
