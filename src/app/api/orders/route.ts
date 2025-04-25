@@ -40,17 +40,48 @@ export async function GET() {
     );
   }
 }
-
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     await connectToDB();
     
-    const order = new OrderModel(body);
+    const order = new OrderModel({
+      customer: body.customer,
+      status: body.status,
+      dueDate: body.dueDate,
+      items: body.items.map((item: any) => ({
+        product: item.product.id || item.product,
+        quantity: item.quantity,
+        size: item.size,
+        color: item.color,
+        material: item.material,
+        printType: item.printType,
+        price: item.price
+      })),
+      shipping: body.shipping,
+      design: {
+        description: body.design.description,
+        placement: body.design.placement,
+        colors: body.design.colors || [],
+        mockupUrl: body.design.mockupUrl,
+      },
+      payment: {
+        status: body.payment.status,
+        method: body.payment.method,
+        amount: body.payment.amount,
+        tax: body.payment.tax,
+        discount: body.payment.discount,
+        shipping: body.payment.shipping,
+        total: body.payment.total,
+      },
+      notes: body.notes,
+    });
+    
     await order.save();
     
     // Populate customer information
     await order.populate('customer');
+    await order.populate('items.product');
     
     return NextResponse.json(
       { 
@@ -64,7 +95,18 @@ export async function POST(request: Request) {
             phone: order.customer.phone,
             company: order.customer.company
           },
-          items: order.items,
+          items: order.items.map((item: any) => ({
+            product: {
+              id: item.product._id?.toString() || item.product,
+              name: item.product.name || 'Unknown Product'
+            },
+            quantity: item.quantity,
+            size: item.size,
+            color: item.color,
+            material: item.material,
+            price: item.price
+          })),
+          shipping: order.shipping,
           status: order.status,
           dueDate: order.dueDate,
           payment: order.payment,

@@ -3,10 +3,12 @@ import { Schema, model, models } from 'mongoose';
 // Define enum values for order status and payment status
 const OrderStatus = ['Pending', 'Processing', 'Completed', 'Shipped', 'Cancelled'] as const;
 const PaymentStatus = ['Pending', 'Paid', 'Refunded'] as const;
+const ShippingMethods = ['Standard', 'Express', 'Priority', 'Pickup'] as const;
 
 const OrderItemSchema = new Schema({
   product: { 
-    type: Schema.Types.Mixed, 
+    type: Schema.Types.ObjectId, 
+    ref: 'Product',
     required: true 
   },
   quantity: { 
@@ -20,11 +22,11 @@ const OrderItemSchema = new Schema({
   },
   color: { 
     type: String, 
-    default: 'Default' 
+    required: true 
   },
   material: { 
     type: String, 
-    default: 'Cotton' 
+    required: true 
   },
   printType: { 
     type: String, 
@@ -35,6 +37,28 @@ const OrderItemSchema = new Schema({
     required: true, 
     min: 0 
   }
+});
+
+const ShippingSchema = new Schema({
+  address: {
+    street: { type: String, required: true },
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    postalCode: { type: String, required: true },
+    country: { type: String, required: true }
+  },
+  method: { 
+    type: String, 
+    enum: ShippingMethods, 
+    default: 'Standard' 
+  },
+  cost: { 
+    type: Number, 
+    required: true, 
+    default: 0 
+  },
+  trackingNumber: { type: String },
+  estimatedDelivery: { type: Date }
 });
 
 const DesignSchema = new Schema({
@@ -77,6 +101,10 @@ const PaymentSchema = new Schema({
     type: Number, 
     default: 0 
   },
+  shipping: {
+    type: Number,
+    default: 0
+  },
   total: { 
     type: Number, 
     required: true, 
@@ -92,6 +120,7 @@ const OrderSchema = new Schema({
   },
   items: [OrderItemSchema],
   design: DesignSchema,
+  shipping: ShippingSchema,
   status: { 
     type: String, 
     enum: OrderStatus, 
