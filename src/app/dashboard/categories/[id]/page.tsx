@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +31,7 @@ import { Separator } from "@/components/ui/separator";
 export default function CategoryDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: { id: unknown };
 }) {
   const [category, setCategory] = useState<Category | null>(null);
   const [subcategories, setSubcategories] = useState<Category[]>([]);
@@ -39,8 +39,7 @@ export default function CategoryDetailPage({
   const [loading, setLoading] = useState(true);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const router = useRouter();
-  const categoryId = params.id;
-
+  const categoryId = use(params).id;
   useEffect(() => {
     const fetchData = async () => {
       try {
