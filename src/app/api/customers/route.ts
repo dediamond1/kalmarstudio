@@ -1,26 +1,30 @@
 import { NextResponse } from 'next/server';
 import { connectToDB } from '@/lib/mongoose';
-import { ICustomer as Customer } from '@/models/customer.model';
-import { ObjectId } from 'mongodb';
+import { CustomerModel } from '@/models/schemas/customer.schema';
 
 export async function GET() {
   try {
-    const conn = await connectToDB();
-    if (!conn.connection.db) {
-      return NextResponse.json(
-        { error: 'Database connection not established' },
-        { status: 500 }
-      );
-    }
-    const customers = await conn.connection.db
-      .collection('customers')
-      .find()
-      .toArray();
-    console.log(customers)
-    return NextResponse.json(customers);
-  } catch (error) {
+    await connectToDB();
+    const customers = await CustomerModel.find().sort({ createdAt: -1 });
+    
     return NextResponse.json(
-      { error: 'Failed to fetch customers' },
+      customers.map(customer => ({
+        id: customer._id as any,
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone,
+        company: customer.company,
+        address: customer.address,
+        taxId: customer.taxId,
+        notes: customer.notes,
+        createdAt: customer.createdAt,
+        updatedAt: customer.updatedAt
+      }))
+    );
+  } catch (error) {
+    console.error('Failed to fetch customers:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to fetch customers' },
       { status: 500 }
     );
   }
@@ -28,28 +32,42 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { id } = await request.json();
-    const conn = await connectToDB();
-    if (!conn.connection.db) {
-      return NextResponse.json(
-        { error: 'Database connection not established' },
-        { status: 500 }
-      );
-    }
-    const customer = await conn.connection.db
-      .collection('customers')
-      .findOne({ _id: new ObjectId(id) });
+    const body = await request.json();
+    await connectToDB();
     
-    if (!customer) {
+    const customer = new CustomerModel(body);
+    await customer.save();
+    
+    return NextResponse.json({
+      id: customer._id,
+      name: customer.name,
+      email: customer.email,
+      phone: customer.phone,
+      company: customer.company,
+      address: customer.address,
+      taxId: customer.taxId,
+      notes: customer.notes,
+      createdAt: customer.createdAt,
+      updatedAt: customer.updatedAt
+    }, { status: 201 });
+  } catch (error: any) {
+    console.error('Failed to create customer:', error);
+    
+    if (error.code === 11000) {
       return NextResponse.json(
-        { error: 'Customer not found' },
-        { status: 404 }
+        { 
+          success: false, 
+          error: 'A customer with this email already exists.' 
+        },
+        { status: 400 }
       );
     }
-    return NextResponse.json(customer);
-  } catch (error) {
+    
     return NextResponse.json(
-      { error: 'Failed to fetch customer' },
+      { 
+        success: false, 
+        error: error.message || 'Failed to create customer' 
+      },
       { status: 500 }
     );
   }

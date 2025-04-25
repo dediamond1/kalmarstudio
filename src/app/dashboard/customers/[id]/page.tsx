@@ -1,156 +1,283 @@
 "use client";
 
-import { use } from "react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { toast } from "sonner";
-
+import { useState, useEffect, use } from "react";
 import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import {
+  ArrowLeft,
+  Edit,
+  Trash,
+  Mail,
+  Phone,
+  Building,
+  MapPin,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
+import { getCustomer, deleteCustomer } from "@/lib/api/customers";
+import { getCountryByCode } from "@/lib/countries";
+import type { Customer } from "@/types/customer";
 
-interface UpdateCustomerDto {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  company?: string;
-  address?: {
-    street?: string;
-    city?: string;
-    state?: string;
-    postalCode?: string;
-    country: string;
-  };
-  taxId?: string;
-  notes?: string;
-}
-
-export default function CustomerDetailsPage({
+export default function CustomerDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
-  const { id } = use(params);
-  const router = useRouter();
+  const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const form = useForm<UpdateCustomerDto>();
-  const [customerId, setCustomerId] = useState("");
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const router = useRouter();
+  const customerId = use(params).id;
 
   useEffect(() => {
-    const fetchCustomer = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get(`/api/customers/${id}`);
-        form.reset(response.data);
-        setCustomerId(id);
+        setLoading(true);
+        const customerData = await getCustomer(customerId);
+        setCustomer(customerData);
       } catch (error) {
-        toast.error("Failed to load customer");
+        console.error("Error fetching customer:", error);
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to load customer details"
+        );
         router.push("/dashboard/customers");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
-    fetchCustomer();
-  }, [id]);
+    fetchData();
+  }, [customerId, router]);
 
-  const onSubmit = async (data: UpdateCustomerDto) => {
+  const handleDelete = async () => {
     try {
-      setIsSubmitting(true);
-      await axios.post("/api/customers/update", {
-        id: customerId,
-        data,
-      });
-      toast.success("Customer updated successfully");
+      await deleteCustomer(customerId);
+      toast.success("Customer deleted successfully");
+      router.push("/dashboard/customers");
     } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        toast.error(error.response?.data?.error || "Failed to update customer");
-      } else {
-        toast.error("Failed to update customer");
-      }
-    } finally {
-      setIsSubmitting(false);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete customer"
+      );
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <div className="text-center">
+          <p>Loading customer details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!customer) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <div className="text-center">
+          <p>Customer not found</p>
+          <Button variant="outline" className="mt-4" asChild>
+            <Link href="/dashboard/customers">Back to Customers</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const countryName = customer.address?.country
+    ? getCountryByCode(customer.address.country)?.name ||
+      customer.address.country
+    : "";
+
+  const addressLines = [];
+  if (customer.address?.street) addressLines.push(customer.address.street);
+  if (customer.address?.city || customer.address?.state) {
+    const cityState = [customer.address.city, customer.address.state]
+      .filter(Boolean)
+      .join(", ");
+    if (cityState) addressLines.push(cityState);
+  }
+  if (customer.address?.postalCode)
+    addressLines.push(customer.address.postalCode);
+  if (countryName) addressLines.push(countryName);
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Customer Details</h1>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" {...form.register("name")} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" {...form.register("email")} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input id="phone" {...form.register("phone")} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="company">Company</Label>
-              <Input id="company" {...form.register("company")} />
-            </div>
-            <div className="space-y-2">
-              <Label>Address</Label>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <Label htmlFor="street">Street</Label>
-                  <Input id="street" {...form.register("address.street")} />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="city">City</Label>
-                  <Input id="city" {...form.register("address.city")} />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="state">State</Label>
-                  <Input id="state" {...form.register("address.state")} />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="postalCode">Postal Code</Label>
-                  <Input
-                    id="postalCode"
-                    {...form.register("address.postalCode")}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="country">Country</Label>
-                  <Input id="country" {...form.register("address.country")} />
-                </div>
+    <div className="space-y-6 max-w-5xl mx-auto pb-10">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-1">
+          <Button variant="ghost" size="sm" asChild className="-ml-2 mb-1">
+            <Link href="/dashboard/customers" className="flex items-center">
+              /* Continuing from where we left off */
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Back to Customers
+            </Link>
+          </Button>
+          <h2 className="text-2xl font-bold tracking-tight">{customer.name}</h2>
+          <div className="flex items-center gap-2">
+            {customer.company && (
+              <Badge variant="outline">{customer.company}</Badge>
+            )}
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setDeleteConfirmOpen(true)}
+          >
+            <Trash className="h-4 w-4 mr-1" />
+            Delete
+          </Button>
+          <Button asChild size="sm">
+            <Link href={`/dashboard/customers/${customerId}/edit`}>
+              <Edit className="h-4 w-4 mr-1" />
+              Edit
+            </Link>
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Customer Contact Details */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Contact Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-start gap-3">
+              <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
+              <div>
+                <h3 className="text-sm font-medium">Email</h3>
+                <p className="text-sm">{customer.email}</p>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="taxId">Tax ID</Label>
-              <Input id="taxId" {...form.register("taxId")} />
+
+            <div className="flex items-start gap-3">
+              <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
+              <div>
+                <h3 className="text-sm font-medium">Phone</h3>
+                <p className="text-sm">{customer.phone}</p>
+              </div>
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Input id="notes" {...form.register("notes")} />
-          </div>
-          <div className="flex gap-2">
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Save Changes"}
+
+            {customer.company && (
+              <div className="flex items-start gap-3">
+                <Building className="h-5 w-5 text-muted-foreground mt-0.5" />
+                <div>
+                  <h3 className="text-sm font-medium">Company</h3>
+                  <p className="text-sm">{customer.company}</p>
+                </div>
+              </div>
+            )}
+
+            {customer.taxId && (
+              <div className="flex items-start gap-3">
+                <div className="h-5 w-5 flex items-center justify-center text-muted-foreground">
+                  #
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium">Tax ID</h3>
+                  <p className="text-sm">{customer.taxId}</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Customer Address */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Address</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {addressLines.length > 0 ? (
+              <div className="flex items-start gap-3">
+                <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
+                <div>
+                  {addressLines.map((line, index) => (
+                    <p key={index} className="text-sm">
+                      {line}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                No address provided
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Notes Section */}
+      {customer.notes && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Notes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm">{customer.notes}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Order History Section - This would be added once order-customer relationship is implemented */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Order History</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-6">
+            <p className="text-muted-foreground text-sm">
+              No order history available
+            </p>
+            <Button variant="outline" size="sm" className="mt-2" asChild>
+              <Link href={`/dashboard/orders/new?customerId=${customerId}`}>
+                Create New Order
+              </Link>
             </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the customer "{customer.name}"?
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
             <Button
               variant="outline"
-              type="button"
-              onClick={() => router.push("/dashboard/customers")}
+              onClick={() => setDeleteConfirmOpen(false)}
             >
               Cancel
             </Button>
-          </div>
-        </form>
-      </Form>
+            <Button variant="destructive" onClick={handleDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -21,7 +20,7 @@ import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-import { createCustomer } from "@/lib/api/customers";
+import { getCustomer, updateCustomer } from "@/lib/api/customers";
 import { getCountries } from "@/lib/countries";
 import {
   Select,
@@ -50,9 +49,15 @@ const customerFormSchema = z.object({
 
 type CustomerFormValues = z.infer<typeof customerFormSchema>;
 
-export default function NewCustomerPage() {
+export default function EditCustomerPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  const customerId = use(params).id;
   const countries = getCountries();
 
   // Setup form with default values
@@ -68,25 +73,73 @@ export default function NewCustomerPage() {
         city: "",
         state: "",
         postalCode: "",
-        country: "SE", // Default to Sweden
+        country: "SE",
       },
       taxId: "",
       notes: "",
     },
   });
 
+  useEffect(() => {
+    const fetchCustomer = async () => {
+      try {
+        setIsLoading(true);
+        const customerData = await getCustomer(customerId);
+
+        // Reset form with customer data
+        form.reset({
+          name: customerData.name,
+          email: customerData.email,
+          phone: customerData.phone,
+          company: customerData.company || "",
+          address: {
+            street: customerData.address?.street || "",
+            city: customerData.address?.city || "",
+            state: customerData.address?.state || "",
+            postalCode: customerData.address?.postalCode || "",
+            country: customerData.address?.country || "SE",
+          },
+          taxId: customerData.taxId || "",
+          notes: customerData.notes || "",
+        });
+      } catch (error) {
+        console.error("Error fetching customer:", error);
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to load customer details"
+        );
+        router.push("/dashboard/customers");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCustomer();
+  }, [customerId, form, router]);
+
   async function onSubmit(values: CustomerFormValues) {
     setIsSubmitting(true);
 
     try {
-      await createCustomer(values);
-      toast.success("Customer created successfully");
-      router.push("/dashboard/customers");
+      await updateCustomer(customerId, values);
+      toast.success("Customer updated successfully");
+      router.push(`/dashboard/customers/${customerId}`);
     } catch (error: any) {
-      toast.error(error.message || "Failed to create customer");
+      toast.error(error.message || "Failed to update customer");
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <div className="text-center">
+          <p>Loading customer data...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -94,17 +147,16 @@ export default function NewCustomerPage() {
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <Button variant="ghost" size="sm" asChild className="-ml-2 mb-1">
-            <Link href="/dashboard/customers" className="flex items-center">
+            <Link
+              href={`/dashboard/customers/${customerId}`}
+              className="flex items-center"
+            >
               <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Customers
+              Back to Customer
             </Link>
           </Button>
-          <h2 className="text-2xl font-bold tracking-tight">
-            Create New Customer
-          </h2>
-          <p className="text-muted-foreground">
-            Add a new customer to your database
-          </p>
+          <h2 className="text-2xl font-bold tracking-tight">Edit Customer</h2>
+          <p className="text-muted-foreground">Update customer information</p>
         </div>
       </div>
 
@@ -312,12 +364,14 @@ export default function NewCustomerPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => router.push("/dashboard/customers")}
+                  onClick={() =>
+                    router.push(`/dashboard/customers/${customerId}`)
+                  }
                 >
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Creating..." : "Create Customer"}
+                  {isSubmitting ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
             </form>
