@@ -45,7 +45,7 @@ import {
 } from "@/components/ui/command";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import { getProductsForOrderSelection } from "@/lib/api/products";
+import { getProducts, getProductsForOrderSelection } from "@/lib/api/products";
 
 // Define the form schema
 const orderFormSchema = z.object({
@@ -192,12 +192,15 @@ export default function NewOrderPage() {
     async function fetchProducts() {
       try {
         setIsLoadingProducts(true);
-        const productsData = await getProductsForOrderSelection();
-        console.log(productsData);
-        setProducts(productsData);
+        const productsData = await getProducts();
+        console.log("Products fetched successfully:", productsData);
+        setProducts(productsData || []);
+        setIsLoadingProducts(false);
       } catch (error) {
         console.error("Failed to fetch products:", error);
-        toast.error("Failed to load products");
+        toast.error("Failed to load products. Please try again later.");
+        // Set empty array to prevent null errors
+        setProducts([]);
       } finally {
         setIsLoadingProducts(false);
       }
@@ -223,9 +226,10 @@ export default function NewOrderPage() {
   const handleProductChange = (index: number, productId: string) => {
     const selectedProduct = products.find((p) => p.id === productId);
     if (selectedProduct) {
-      form.setValue(`items.${index}.price`, selectedProduct.basePrice);
+      // Set base price
+      form.setValue(`items.${index}.price`, selectedProduct.basePrice || 0);
 
-      // Set default size, color, and material if available
+      // Set default size if available
       if (
         selectedProduct.availableSizes &&
         selectedProduct.availableSizes.length > 0
@@ -233,10 +237,12 @@ export default function NewOrderPage() {
         form.setValue(`items.${index}.size`, selectedProduct.availableSizes[0]);
       }
 
+      // Set default color if available
       if (selectedProduct.colors && selectedProduct.colors.length > 0) {
         form.setValue(`items.${index}.color`, selectedProduct.colors[0]);
       }
 
+      // Set default material if available
       if (selectedProduct.materials && selectedProduct.materials.length > 0) {
         form.setValue(`items.${index}.material`, selectedProduct.materials[0]);
       }
@@ -248,11 +254,12 @@ export default function NewOrderPage() {
     productId: string,
     option: "availableSizes" | "colors" | "materials"
   ) => {
+    if (!productId) return [];
+
     const product = products.find((p) => p.id === productId);
-    if (product && product[option]) {
-      return product[option];
-    }
-    return [];
+    if (!product) return [];
+
+    return product[option] || [];
   };
 
   // Calculate totals when items change
@@ -415,9 +422,9 @@ export default function NewOrderPage() {
                                     Loading customers...
                                   </div>
                                 ) : (
-                                  filteredCustomers.map((customer) => (
+                                  filteredCustomers.map((customer, index) => (
                                     <CommandItem
-                                      key={customer._id}
+                                      key={index}
                                       value={customer._id}
                                       onSelect={() => {
                                         form.setValue("customer", customer._id);
@@ -655,13 +662,17 @@ export default function NewOrderPage() {
                               <SelectItem value="" disabled>
                                 Loading products...
                               </SelectItem>
-                            ) : (
+                            ) : products && products.length > 0 ? (
                               products.map((product) => (
                                 <SelectItem key={product.id} value={product.id}>
                                   {product.name} - $
-                                  {product.basePrice.toFixed(2)}
+                                  {product.basePrice?.toFixed(2) || "0.00"}
                                 </SelectItem>
                               ))
+                            ) : (
+                              <SelectItem value="" disabled>
+                                No products available
+                              </SelectItem>
                             )}
                           </SelectContent>
                         </Select>

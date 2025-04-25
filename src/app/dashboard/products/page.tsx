@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import Link from "next/link";
 import { Product } from "@/types/product";
+import { getProducts } from "@/lib/api/products";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -46,14 +47,8 @@ export default function ProductsPage() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/products");
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(result.error || "Failed to fetch products");
-      }
-
-      setProducts(result.data);
+      const productsData = await getProducts();
+      setProducts(productsData);
     } catch (error) {
       console.error("Error fetching products:", error);
       toast.error(
@@ -70,6 +65,12 @@ export default function ProductsPage() {
         method: "DELETE",
       });
 
+      if (!response.ok) {
+        throw new Error(
+          `Failed to delete product: ${response.status} ${response.statusText}`
+        );
+      }
+
       const result = await response.json();
 
       if (!result.success) {
@@ -79,6 +80,7 @@ export default function ProductsPage() {
       setProducts(products.filter((product) => product.id !== id));
       toast.success("Product deleted successfully");
     } catch (error: unknown) {
+      console.error("Error deleting product:", error);
       toast.error(
         error instanceof Error ? error.message : "Failed to delete product"
       );

@@ -16,7 +16,7 @@ export async function GET() {
         name: product.name,
         basePrice: product.basePrice,
         category: {
-          id: product.category._id,
+          id: product.category?._id,
           name: product.category.name
         },
         availableSizes: product.availableSizes,

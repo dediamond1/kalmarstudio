@@ -17,16 +17,16 @@ export async function GET() {
         name: product.name,
         description: product.description,
         basePrice: product.basePrice,
-        printTypes: product.printTypes,
-        availableSizes: product.availableSizes,
-        colors: product.colors,
-        materials: product.materials,
-        minOrderQuantity: product.minOrderQuantity,
-        imageUrls: product.imageUrls,
+        printTypes: product.printTypes || [],
+        availableSizes: product.availableSizes || [],
+        colors: product.colors || [],
+        materials: product.materials || [],
+        minOrderQuantity: product.minOrderQuantity || 1,
+        imageUrls: product.imageUrls || [],
         category: {
-          id: product.category._id,
-          name: product.category.name,
-          slug: product.category.slug
+          id: product.category?._id || '',
+          name: product.category?.name || 'Uncategorized',
+          slug: product.category?.slug || ''
         },
         isActive: product.isActive,
         createdAt: product.createdAt,
@@ -36,7 +36,7 @@ export async function GET() {
   } catch (error) {
     console.error('Failed to fetch products:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch products' },
+      { success: false, error: 'Failed to fetch products from database' },
       { status: 500 }
     );
   }
@@ -93,8 +93,8 @@ export async function POST(request: Request) {
             minOrderQuantity: product.minOrderQuantity,
             imageUrls: product.imageUrls,
             category: {
-              id: product.category._id,
-              name: product.category.name,
+              id: product.category?._id || "uncategorized",
+              name: product.category.name || "uncategorized",
               slug: product.category.slug
             },
             isActive: product.isActive,

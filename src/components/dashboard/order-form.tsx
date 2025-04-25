@@ -42,6 +42,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { useRouter } from "next/navigation";
 
 // Define the form schema
 const orderFormSchema = z.object({
@@ -145,7 +146,7 @@ export default function OrderForm({ onSuccess, onCancel }: OrderFormProps) {
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
   const [customerSearchQuery, setCustomerSearchQuery] = useState("");
   const [openCustomerCombobox, setOpenCustomerCombobox] = useState(false);
-
+  const router = useRouter();
   // Setup form with default values
   const form = useForm<OrderFormValues>({
     resolver: zodResolver(orderFormSchema),
@@ -184,11 +185,22 @@ export default function OrderForm({ onSuccess, onCancel }: OrderFormProps) {
       try {
         setIsLoadingCustomers(true);
         const response = await fetch("/api/customers");
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch customers: ${response.status}`);
+        }
+
         const data = await response.json();
-        setCustomers(data);
+        if (Array.isArray(data)) {
+          setCustomers(data);
+        } else {
+          console.error("Unexpected customer data format:", data);
+          setCustomers([]);
+        }
       } catch (error) {
         console.error("Failed to fetch customers:", error);
         toast.error("Failed to load customers");
+        setCustomers([]);
       } finally {
         setIsLoadingCustomers(false);
       }
@@ -203,8 +215,8 @@ export default function OrderForm({ onSuccess, onCancel }: OrderFormProps) {
 
     const query = customerSearchQuery.toLowerCase();
     return (
-      customer.name.toLowerCase().includes(query) ||
-      customer.email.toLowerCase().includes(query) ||
+      customer.name?.toLowerCase().includes(query) ||
+      customer.email?.toLowerCase().includes(query) ||
       (customer.company && customer.company.toLowerCase().includes(query))
     );
   });
@@ -235,29 +247,41 @@ export default function OrderForm({ onSuccess, onCancel }: OrderFormProps) {
     setIsSubmitting(true);
 
     try {
-      const selectedCustomer = customers.find((c) => c._id === values.customer);
+      const selectedCustomerId = values.customer;
+
+      if (!selectedCustomerId) {
+        toast.error("Customer is required. Please select a customer.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const selectedCustomer = customers.find(
+        (c) => c._id === selectedCustomerId
+      );
 
       if (!selectedCustomer) {
-        throw new Error("Customer not found");
+        toast.error("Selected customer not found. Please try again.");
+        setIsSubmitting(false);
+        return;
       }
 
       const orderData = {
-        customer: values.customer,
+        customer: selectedCustomerId,
         status: values.status,
         dueDate: values.dueDate,
-        items: values.items.map((item) => ({
+        items: values.items.map((item: any) => ({
           product: item.product,
           quantity: item.quantity,
           size: item.size,
-          color: item.color || "Default",
+          color: item.color || "black",
+          material: item?.material || "Cotton",
+          printType: item?.printType || "digital",
           price: item.price,
-          material: "Cotton", // Default value
-          printType: "Digital", // Default value
         })),
         design: {
           description: values.design.description,
           placement: values.design.placement || "front_center",
-          colors: [],
+          colors: values.design?.colors || [],
           mockupUrl: values.design.mockupUrl,
         },
         payment: {
@@ -271,6 +295,8 @@ export default function OrderForm({ onSuccess, onCancel }: OrderFormProps) {
         notes: values.notes,
       };
 
+      console.log("Submitting order with data:", orderData);
+
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: {
@@ -279,6 +305,10 @@ export default function OrderForm({ onSuccess, onCancel }: OrderFormProps) {
         body: JSON.stringify(orderData),
       });
 
+      if (!response.ok) {
+        throw new Error(`Failed to create order: ${response.status}`);
+      }
+
       const data = await response.json();
 
       if (!data.success) {
@@ -286,11 +316,9 @@ export default function OrderForm({ onSuccess, onCancel }: OrderFormProps) {
       }
 
       toast.success("Order created successfully");
-
-      if (onSuccess) {
-        onSuccess();
-      }
+      router.push("/dashboard/orders");
     } catch (error: any) {
+      console.error("Error creating order:", error);
       toast.error(error.message || "Failed to create order");
     } finally {
       setIsSubmitting(false);
@@ -361,7 +389,9 @@ export default function OrderForm({ onSuccess, onCancel }: OrderFormProps) {
                                     }}
                                   >
                                     <div className="flex flex-col">
-                                      <span>{customer.name}</span>
+                                      <span className="font-medium">
+                                        {customer.name}
+                                      </span>
                                       <span className="text-xs text-muted-foreground">
                                         {customer.email}{" "}
                                         {customer.company

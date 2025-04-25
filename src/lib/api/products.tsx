@@ -4,6 +4,13 @@ import type { Product } from "@/types/product";
 export async function getProducts(): Promise<Product[]> {
   try {
     const response = await fetch("/api/products");
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch products: ${response.status} ${response.statusText}`
+      );
+    }
+
     const data = await response.json();
 
     if (!data.success) {
@@ -21,6 +28,13 @@ export async function getProducts(): Promise<Product[]> {
 export async function getProductsForOrderSelection(): Promise<any[]> {
   try {
     const response = await fetch("/api/products/list");
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch products list: ${response.status} ${response.statusText}`
+      );
+    }
+
     const data = await response.json();
 
     if (!data.success) {
@@ -38,6 +52,13 @@ export async function getProductsForOrderSelection(): Promise<any[]> {
 export async function getProduct(id: string): Promise<Product> {
   try {
     const response = await fetch(`/api/products/${id}`);
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch product: ${response.status} ${response.statusText}`
+      );
+    }
+
     const data = await response.json();
 
     if (!data.success) {
@@ -58,13 +79,20 @@ export async function getProductsByCategory(
   try {
     // This endpoint needs to be created
     const response = await fetch(`/api/products?categoryId=${categoryId}`);
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch products by category: ${response.status} ${response.statusText}`
+      );
+    }
+
     const data = await response.json();
 
     if (!data.success) {
       throw new Error(data.error || "Failed to fetch products by category");
     }
 
-    return data.data;
+    return data.data || [];
   } catch (error) {
     console.error("Error fetching products by category:", error);
     throw error;
