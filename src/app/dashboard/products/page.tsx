@@ -92,7 +92,7 @@ export default function ProductsPage() {
     return (
       product.name.toLowerCase().includes(searchLower) ||
       product.description.toLowerCase().includes(searchLower) ||
-      product.category?.toLowerCase().includes(searchLower)
+      product.category.name.toLowerCase().includes(searchLower)
     );
   });
 
@@ -179,7 +179,12 @@ export default function ProductsPage() {
                     </div>
                   </TableCell>
                   <TableCell>${product.basePrice.toFixed(2)}</TableCell>
-                  <TableCell>{product.category || "Uncategorized"}</TableCell>
+                  <TableCell>
+                    {/* Display category as a badge */}
+                    <Badge variant="outline" className="font-normal">
+                      {product.category?.name}
+                    </Badge>
+                  </TableCell>
                   <TableCell>{product.availableSizes.join(", ")}</TableCell>
                   <TableCell>
                     <Badge variant={product.isActive ? "default" : "outline"}>

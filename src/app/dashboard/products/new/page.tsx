@@ -33,12 +33,15 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import CategorySelectField from "@/components/dashboard/category-select";
+import { Category } from "@/types/category";
 
 // Define the form schema
 const productFormSchema = z.object({
   name: z.string().min(1, "Product name is required"),
   description: z.string().min(1, "Description is required"),
   basePrice: z.coerce.number().min(0.01, "Price must be greater than 0"),
+  category: z.string().min(1, "Category is required"),
   printTypes: z.array(z.string()).min(1, "At least one print type is required"),
   availableSizes: z.array(z.string()).min(1, "At least one size is required"),
   colors: z.array(z.string()).min(1, "At least one color is required"),
@@ -48,7 +51,6 @@ const productFormSchema = z.object({
     .int()
     .min(1, "Minimum order quantity must be at least 1"),
   imageUrls: z.array(z.string()),
-  category: z.string().optional(),
   isActive: z.boolean(),
   maxPrintSizeWidth: z.coerce
     .number()
@@ -184,19 +186,50 @@ export default function NewProductPage() {
       name: "",
       description: "",
       basePrice: 0,
+      category: "", // Initialize the category field
       printTypes: [],
       availableSizes: [],
       colors: [],
       materials: [],
       minOrderQuantity: 12, // More realistic default for custom apparel
       imageUrls: [""],
-      category: "t_shirts",
       isActive: true,
       maxPrintSizeWidth: 12, // Default 12 inches
       maxPrintSizeHeight: 14, // Default 14 inches
       printPositions: [],
     },
   });
+
+  useEffect(() => {
+    const checkCategories = async () => {
+      try {
+        const response = await fetch("/api/categories");
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.error || "Failed to fetch categories");
+        }
+
+        const activeCategories = data.data.filter(
+          (category: Category) => category.isActive
+        );
+
+        if (activeCategories.length === 0) {
+          toast.warning("You need to create a category before adding products");
+
+          // Delay redirect to ensure toast is visible
+          setTimeout(() => {
+            router.push("/dashboard/categories/new");
+          }, 2000);
+        }
+      } catch (error) {
+        console.error("Error checking categories:", error);
+        toast.error("Failed to check if categories exist");
+      }
+    };
+
+    checkCategories();
+  }, [router]);
 
   useEffect(() => {
     const updateTabErrors = () => {
@@ -242,6 +275,17 @@ export default function NewProductPage() {
     setIsSubmitting(true);
 
     try {
+      // Clear any previous errors
+      console.log("Form values:", values);
+
+      // Check if a category is selected
+      if (!values.category || values.category.trim() === "") {
+        toast.error("A category is required. Please select a category.");
+        setActiveTab("details"); // Switch to the details tab where category is located
+        setIsSubmitting(false);
+        return;
+      }
+
       // Filter out empty image URLs
       const filteredImageUrls = values.imageUrls.filter(
         (url) => url.trim() !== ""
@@ -251,6 +295,8 @@ export default function NewProductPage() {
         ...values,
         imageUrls: filteredImageUrls,
       };
+
+      console.log("Sending product data:", productData);
 
       const response = await fetch("/api/products", {
         method: "POST",
@@ -263,12 +309,22 @@ export default function NewProductPage() {
       const data = await response.json();
 
       if (!data.success) {
-        throw new Error(data.error || "Failed to create product");
+        console.error("API error:", data);
+        if (data.details && Array.isArray(data.details)) {
+          // Show specific validation errors
+          data.details.forEach((error: string) => {
+            toast.error(error);
+          });
+        } else {
+          throw new Error(data.error || "Failed to create product");
+        }
+        return;
       }
 
       toast.success("Product created successfully");
       router.push("/dashboard/products");
     } catch (error: any) {
+      console.error("Create product error:", error);
       toast.error(error.message || "Failed to create product");
     } finally {
       setIsSubmitting(false);
@@ -376,136 +432,163 @@ export default function NewProductPage() {
 
             <Form {...form}>
               <form onSubmit={handleFormSubmit}>
-                <TabsContent value="details" className="space-y-4 mt-0">
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Product Name</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="e.g. Premium Crewneck T-Shirt"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="category"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Category</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select category" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {categoryOptions.map((option) => (
-                                <SelectItem key={option.id} value={option.id}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Describe the product, fabric quality, fit, etc."
-                            className="h-24 resize-none"
-                            {...field}
+                <TabsContent value="details" className="space-y-6 mt-0">
+                  <div className="bg-red-50 p-4 rounded-lg border border-red-200 mb-6">
+                    <details className="group">
+                      <summary className="flex items-center justify-between cursor-pointer">
+                        <h3 className="font-bold text-red-700">
+                          Debug Information
+                        </h3>
+                        <svg
+                          className="h-5 w-5 text-red-500 transition-transform group-open:rotate-180"
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                            clipRule="evenodd"
                           />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="basePrice"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Base Price ($)</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              min={0}
-                              step={0.01}
-                              placeholder="0.00"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            Starting price before decoration
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="minOrderQuantity"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Minimum Order Quantity</FormLabel>
-                          <FormControl>
-                            <Input type="number" min={1} {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            Minimum pieces per order
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="isActive"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">
-                            Available for Ordering
-                          </FormLabel>
-                          <FormDescription>
-                            Toggle off to hide this product from clients
-                          </FormDescription>
+                        </svg>
+                      </summary>
+                      <div className="mt-3 text-sm text-red-600 space-y-2">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="font-medium">Form Errors:</p>
+                            <pre className="bg-red-100 p-2 rounded text-xs">
+                              {JSON.stringify(form.formState.errors, null, 2)}
+                            </pre>
+                          </div>
+                          <div className="space-y-2">
+                            <p>Name: {form.getValues("name") || "Empty"}</p>
+                            <p>
+                              Category: {form.getValues("category") || "Empty"}
+                            </p>
+                            <p>
+                              Name touched:{" "}
+                              {form.formState.touchedFields.name ? "Yes" : "No"}
+                            </p>
+                            <p>
+                              Name dirty:{" "}
+                              {form.formState.dirtyFields.name ? "Yes" : "No"}
+                            </p>
+                          </div>
                         </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                      </div>
+                    </details>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <h3 className="text-lg font-medium">Basic Information</h3>
+                      <div className="grid grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Product Name</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="e.g. Premium Crewneck T-Shirt"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="basePrice"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Base Price ($)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="0.00"
+                                  min="0.01"
+                                  step="0.01"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        {/* Add the Category field */}
+                        <CategorySelectField form={form} />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h3 className="text-lg font-medium">Product Details</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="description"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Description</FormLabel>
+                              <FormControl>
+                                <Textarea
+                                  placeholder="Enter product description..."
+                                  className="min-h-[120px]"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="minOrderQuantity"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Minimum Order Quantity</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="12"
+                                min="1"
+                                step="1"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="isActive"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                              <FormLabel>Product Status</FormLabel>
+                              <FormDescription>
+                                Toggle product visibility
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="print" className="mt-0">

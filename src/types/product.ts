@@ -3,13 +3,17 @@ export interface Product {
     name: string;
     description: string;
     basePrice: number;
+    category: {
+      id: string;
+      name: string;
+      slug?: string;
+    };
     printTypes: string[];
     availableSizes: string[];
     colors: string[];
     materials: string[];
     minOrderQuantity: number;
     imageUrls: string[];
-    category?: string;
     isActive: boolean;
     createdAt: string;
     updatedAt: string;
@@ -19,13 +23,13 @@ export interface Product {
     name: string;
     description: string;
     basePrice: number;
+    category: string;
     printTypes: string[];
     availableSizes: string[];
     colors: string[];
     materials: string[];
     minOrderQuantity?: number;
     imageUrls: string[];
-    category?: string;
     isActive?: boolean;
   }
   

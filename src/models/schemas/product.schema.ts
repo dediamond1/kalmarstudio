@@ -14,6 +14,11 @@ const ProductSchema = new Schema({
     required: true,
     min: 0
   },
+  category: { 
+    type: Schema.Types.ObjectId,
+    ref: 'Category',
+    required: true
+  },
   printTypes: [{ 
     type: String 
   }],
@@ -34,10 +39,6 @@ const ProductSchema = new Schema({
   imageUrls: [{ 
     type: String 
   }],
-  category: {
-    type: String,
-    default: 'Apparel'
-  },
   isActive: {
     type: Boolean,
     default: true
