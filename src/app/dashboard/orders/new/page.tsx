@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/command";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
+import { getProductsForOrderSelection } from "@/lib/api/products";
 
 // Define the form schema
 const orderFormSchema = z.object({
@@ -65,7 +66,9 @@ const orderFormSchema = z.object({
         product: z.string().min(1, "Product is required"),
         quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
         size: z.string().min(1, "Size is required"),
-        color: z.string().optional(),
+        color: z.string().min(1, "Color is required"),
+        material: z.string().min(1, "Material is required"),
+        printType: z.string().optional(),
         price: z.coerce.number().min(0, "Price must be at least 0"),
       })
     )
@@ -74,6 +77,7 @@ const orderFormSchema = z.object({
     description: z.string().min(1, "Design description is required"),
     placement: z.string().optional(),
     mockupUrl: z.string().optional(),
+    colors: z.array(z.string()).optional(),
   }),
   payment: z.object({
     status: z.enum(["Pending", "Paid", "Refunded"]),
@@ -90,34 +94,6 @@ const orderFormSchema = z.object({
 });
 
 type OrderFormValues = z.infer<typeof orderFormSchema>;
-
-// Available product options
-const productOptions = [
-  { value: "t-shirt", label: "T-Shirt" },
-  { value: "hoodie", label: "Hoodie" },
-  { value: "sweatshirt", label: "Sweatshirt" },
-  { value: "polo", label: "Polo Shirt" },
-  { value: "hat", label: "Hat" },
-];
-
-// Available size options
-const sizeOptions = [
-  { value: "xs", label: "XS" },
-  { value: "s", label: "S" },
-  { value: "m", label: "M" },
-  { value: "l", label: "L" },
-  { value: "xl", label: "XL" },
-  { value: "xxl", label: "2XL" },
-];
-
-// Available color options
-const colorOptions = [
-  { value: "black", label: "Black" },
-  { value: "white", label: "White" },
-  { value: "blue", label: "Blue" },
-  { value: "red", label: "Red" },
-  { value: "green", label: "Green" },
-];
 
 // Payment method options
 const paymentMethods = [
@@ -137,12 +113,23 @@ const placementOptions = [
   { value: "right_sleeve", label: "Right Sleeve" },
 ];
 
+// Print type options
+const printTypeOptions = [
+  { value: "digital", label: "Digital Print" },
+  { value: "screen", label: "Screen Print" },
+  { value: "embroidery", label: "Embroidery" },
+  { value: "heat_transfer", label: "Heat Transfer" },
+  { value: "vinyl", label: "Vinyl" },
+];
+
 export default function NewOrderPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customers, setCustomers] = useState<ICustomer[]>([]);
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
   const [customerSearchQuery, setCustomerSearchQuery] = useState("");
   const [openCustomerCombobox, setOpenCustomerCombobox] = useState(false);
+  const [products, setProducts] = useState<any[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const router = useRouter();
 
   // Setup form with default values
@@ -153,11 +140,20 @@ export default function NewOrderPage() {
       status: "Pending",
       dueDate: new Date(),
       items: [
-        { product: "", quantity: 1, size: "m", color: "black", price: 0 },
+        {
+          product: "",
+          quantity: 1,
+          size: "",
+          color: "",
+          material: "",
+          printType: "digital",
+          price: 0,
+        },
       ],
       design: {
         description: "",
         placement: "front_center",
+        colors: [],
       },
       payment: {
         status: "Pending",
@@ -193,7 +189,22 @@ export default function NewOrderPage() {
       }
     }
 
+    async function fetchProducts() {
+      try {
+        setIsLoadingProducts(true);
+        const productsData = await getProductsForOrderSelection();
+        console.log(productsData);
+        setProducts(productsData);
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+        toast.error("Failed to load products");
+      } finally {
+        setIsLoadingProducts(false);
+      }
+    }
+
     fetchCustomers();
+    fetchProducts();
   }, []);
 
   // Filter customers based on search query
@@ -207,6 +218,42 @@ export default function NewOrderPage() {
       (customer.company && customer.company.toLowerCase().includes(query))
     );
   });
+
+  // Handle product selection
+  const handleProductChange = (index: number, productId: string) => {
+    const selectedProduct = products.find((p) => p.id === productId);
+    if (selectedProduct) {
+      form.setValue(`items.${index}.price`, selectedProduct.basePrice);
+
+      // Set default size, color, and material if available
+      if (
+        selectedProduct.availableSizes &&
+        selectedProduct.availableSizes.length > 0
+      ) {
+        form.setValue(`items.${index}.size`, selectedProduct.availableSizes[0]);
+      }
+
+      if (selectedProduct.colors && selectedProduct.colors.length > 0) {
+        form.setValue(`items.${index}.color`, selectedProduct.colors[0]);
+      }
+
+      if (selectedProduct.materials && selectedProduct.materials.length > 0) {
+        form.setValue(`items.${index}.material`, selectedProduct.materials[0]);
+      }
+    }
+  };
+
+  // Get available sizes, colors, and materials for a selected product
+  const getProductOptions = (
+    productId: string,
+    option: "availableSizes" | "colors" | "materials"
+  ) => {
+    const product = products.find((p) => p.id === productId);
+    if (product && product[option]) {
+      return product[option];
+    }
+    return [];
+  };
 
   // Calculate totals when items change
   useEffect(() => {
@@ -248,15 +295,15 @@ export default function NewOrderPage() {
           product: item.product,
           quantity: item.quantity,
           size: item.size,
-          color: item.color || "Default",
+          color: item.color,
+          material: item.material,
+          printType: item.printType || "digital",
           price: item.price,
-          material: "Cotton", // Default value
-          printType: "Digital", // Default value
         })),
         design: {
           description: values.design.description,
           placement: values.design.placement || "front_center",
-          colors: [],
+          colors: values.design.colors || [],
           mockupUrl: values.design.mockupUrl,
         },
         payment: {
@@ -567,8 +614,10 @@ export default function NewOrderPage() {
                   append({
                     product: "",
                     quantity: 1,
-                    size: "m",
-                    color: "black",
+                    size: "",
+                    color: "",
+                    material: "",
+                    printType: "digital",
                     price: 0,
                   })
                 }
@@ -590,8 +639,11 @@ export default function NewOrderPage() {
                       <FormItem>
                         <FormLabel>Product</FormLabel>
                         <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            handleProductChange(index, value);
+                          }}
+                          value={field.value}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -599,14 +651,18 @@ export default function NewOrderPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {productOptions.map((option) => (
-                              <SelectItem
-                                key={option.value}
-                                value={option.value}
-                              >
-                                {option.label}
+                            {isLoadingProducts ? (
+                              <SelectItem value="" disabled>
+                                Loading products...
                               </SelectItem>
-                            ))}
+                            ) : (
+                              products.map((product) => (
+                                <SelectItem key={product.id} value={product.id}>
+                                  {product.name} - $
+                                  {product.basePrice.toFixed(2)}
+                                </SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -623,7 +679,7 @@ export default function NewOrderPage() {
                           <FormLabel>Size</FormLabel>
                           <Select
                             onValueChange={field.onChange}
-                            defaultValue={field.value}
+                            value={field.value}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -631,12 +687,12 @@ export default function NewOrderPage() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {sizeOptions.map((option) => (
-                                <SelectItem
-                                  key={option.value}
-                                  value={option.value}
-                                >
-                                  {option.label}
+                              {getProductOptions(
+                                form.getValues(`items.${index}.product`),
+                                "availableSizes"
+                              ).map((size: string) => (
+                                <SelectItem key={size} value={size}>
+                                  {size.toUpperCase()}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -654,7 +710,7 @@ export default function NewOrderPage() {
                           <FormLabel>Color</FormLabel>
                           <Select
                             onValueChange={field.onChange}
-                            defaultValue={field.value}
+                            value={field.value}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -662,7 +718,87 @@ export default function NewOrderPage() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {colorOptions.map((option) => (
+                              {getProductOptions(
+                                form.getValues(`items.${index}.product`),
+                                "colors"
+                              ).map((color: string) => (
+                                <SelectItem key={color} value={color}>
+                                  {color.charAt(0).toUpperCase() +
+                                    color.slice(1)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name={`items.${index}.material`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Material</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Material" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {getProductOptions(
+                                form.getValues(`items.${index}.product`),
+                                "materials"
+                              ).map((material: string) => (
+                                <SelectItem key={material} value={material}>
+                                  {material.charAt(0).toUpperCase() +
+                                    material.slice(1)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name={`items.${index}.quantity`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Quantity</FormLabel>
+                          <FormControl>
+                            <Input type="number" min={1} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name={`items.${index}.printType`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Print Type</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Print Type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {printTypeOptions.map((option) => (
                                 <SelectItem
                                   key={option.value}
                                   value={option.value}
@@ -679,25 +815,9 @@ export default function NewOrderPage() {
 
                     <FormField
                       control={form.control}
-                      name={`items.${index}.quantity`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Quantity</FormLabel>
-                          <FormControl>
-                            <Input type="number" min={1} {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="flex justify-between items-end">
-                    <FormField
-                      control={form.control}
                       name={`items.${index}.price`}
                       render={({ field }) => (
-                        <FormItem className="w-full max-w-[200px]">
+                        <FormItem>
                           <FormLabel>Unit Price</FormLabel>
                           <FormControl>
                             <Input
@@ -711,7 +831,9 @@ export default function NewOrderPage() {
                         </FormItem>
                       )}
                     />
+                  </div>
 
+                  <div className="flex justify-end">
                     <Button
                       type="button"
                       variant="ghost"

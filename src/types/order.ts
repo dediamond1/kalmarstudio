@@ -9,15 +9,15 @@ export interface OrderItem {
 }
 
 export interface ShippingDetails {
-  address: {
-    street: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    country: string;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+    country?: string;
   };
-  method: "Standard" | "Express" | "Priority" | "Pickup";
-  cost: number;
+  method?: "Standard" | "Express" | "Priority" | "Pickup";
+  cost?: number;
   trackingNumber?: string;
   estimatedDelivery?: string;
 }
@@ -34,7 +34,7 @@ export interface OrderPayment {
   method: string;
   amount: number;
   tax: number;
-  shipping: number;
+  shipping?: number;
   total: number;
   discount?: number;
 }
@@ -48,8 +48,8 @@ export interface Order {
     phone: string;
     company?: string;
   };
-  design?: OrderDesign;
-  shipping: ShippingDetails;
+  design: OrderDesign;
+  shipping?: ShippingDetails;
   items: OrderItem[];
   status: "Pending" | "Processing" | "Completed" | "Shipped" | "Cancelled";
   dueDate: string;

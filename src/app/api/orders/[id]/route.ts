@@ -9,7 +9,8 @@ export async function GET(
   try {
     await connectToDB();
     const order = await OrderModel.findById(params.id)
-      .populate('customer');
+      .populate('customer')
+      .populate('items.product');
 
     if (!order) {
       return NextResponse.json(
@@ -29,11 +30,23 @@ export async function GET(
           phone: order.customer.phone,
           company: order.customer.company
         },
-        items: order.items,
+        items: order.items.map((item: any) => ({
+          product: {
+            id: item.product._id?.toString() || '',
+            name: item.product.name || 'Unknown Product'
+          },
+          quantity: item.quantity,
+          size: item.size,
+          color: item.color,
+          material: item.material,
+          price: item.price,
+          printType: item.printType
+        })),
         status: order.status,
         dueDate: order.dueDate,
         payment: order.payment,
         design: order.design,
+        shipping: order.shipping,
         createdAt: order.createdAt,
         updatedAt: order.updatedAt
       }
@@ -59,7 +72,7 @@ export async function PUT(
       params.id,
       body,
       { new: true }
-    ).populate('customer');
+    ).populate('customer').populate('items.product');
 
     if (!updatedOrder) {
       return NextResponse.json(
@@ -79,11 +92,23 @@ export async function PUT(
           phone: updatedOrder.customer.phone,
           company: updatedOrder.customer.company
         },
-        items: updatedOrder.items,
+        items: updatedOrder.items.map((item: any) => ({
+          product: {
+            id: item.product._id?.toString() || '',
+            name: item.product.name || 'Unknown Product'
+          },
+          quantity: item.quantity,
+          size: item.size,
+          color: item.color,
+          material: item.material,
+          price: item.price,
+          printType: item.printType
+        })),
         status: updatedOrder.status,
         dueDate: updatedOrder.dueDate,
         payment: updatedOrder.payment,
         design: updatedOrder.design,
+        shipping: updatedOrder.shipping,
         createdAt: updatedOrder.createdAt,
         updatedAt: updatedOrder.updatedAt
       }
