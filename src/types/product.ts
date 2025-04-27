@@ -35,4 +35,21 @@ export interface Product {
     isActive?: boolean;
   }
   
-  export interface UpdateProductDto extends Partial<CreateProductDto> {}
+export interface UpdateProductDto extends Partial<CreateProductDto> {}
+
+export interface CartItem {
+  productId: string
+  name: string
+  imageUrl: string
+  price: number
+  quantity: number
+  color?: string
+  printType?: string
+  material?: string
+  selectedOptions?: {
+    size?: string
+    color?: string
+    material?: string
+    printType?: string
+  }
+}

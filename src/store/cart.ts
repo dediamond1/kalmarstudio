@@ -14,6 +14,8 @@ export interface CartItem {
   price: number;
   image: string;
   color?: string;
+  printType?: string;
+  material?: string;
   sizes: CartItemSize[];
   totalQuantity: number;
 }
@@ -86,18 +88,20 @@ export const useCartStore = create<CartState>()(
       },
       removeSize: (productId, size) => {
         set((state) => ({
-          items: state.items.map((item) => {
-            if (item.productId !== productId) return item;
-            
-            const filteredSizes = item.sizes.filter((s) => s.size !== size);
-            if (filteredSizes.length === 0) {
-              return null;
-            }
-            return {
-              ...item,
-              sizes: filteredSizes
-            };
-          }).filter(Boolean)
+          items: state.items
+            .map((item) => {
+              if (item.productId !== productId) return item;
+              
+              const filteredSizes = item.sizes.filter((s) => s.size !== size);
+              return filteredSizes.length > 0 
+                ? {
+                    ...item,
+                    sizes: filteredSizes,
+                    totalQuantity: filteredSizes.reduce((sum, s) => sum + s.quantity, 0)
+                  }
+                : null;
+            })
+            .filter((item): item is CartItem => item !== null)
         }));
       },
       updateSizeQuantity: (productId, size, quantity) => {
@@ -134,7 +138,7 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: "cart-storage",
-      getStorage: () => localStorage,
+      storage: createJSONStorage(() => localStorage),
     }
   )
 );

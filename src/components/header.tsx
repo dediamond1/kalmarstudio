@@ -6,6 +6,7 @@ import { Menu, X, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useCartStore, type CartState } from "@/store/cart";
+import CartCount from "@/components/CartCount";
 
 const navLinks = [
   { name: "Products", href: "/products" },
@@ -28,12 +29,7 @@ export default function Header() {
             <Button variant="ghost" size="icon" className="relative" asChild>
               <div>
                 <ShoppingCart className="h-5 w-5" />
-                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                  {useCartStore((state: CartState) => {
-                    const count = state.totalItems();
-                    return count > 0 ? count : null;
-                  })}
-                </span>
+                <CartCount />
               </div>
             </Button>
           </Link>

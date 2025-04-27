@@ -6,36 +6,33 @@ const PaymentStatus = ['Pending', 'Paid', 'Refunded'] as const;
 const ShippingMethods = ['Standard', 'Express', 'Priority', 'Pickup'] as const;
 
 const OrderItemSchema = new Schema({
-  product: { 
-    type: Schema.Types.ObjectId, 
-    ref: 'Product',
+  productId: { 
+    type: String,
     required: true 
+  },
+  name: {
+    type: String,
+    required: true
+  },
+  image: {
+    type: String,
+    required: true
   },
   quantity: { 
     type: Number, 
     required: true, 
     min: 1 
   },
-  size: { 
-    type: String, 
-    required: true 
-  },
-  color: { 
-    type: String, 
-    required: true 
-  },
-  material: { 
-    type: String, 
-    required: true 
-  },
-  printType: { 
-    type: String, 
-    default: 'Digital' 
-  },
   price: { 
     type: Number, 
     required: true, 
     min: 0 
+  },
+  color: { 
+    type: String 
+  },
+  size: { 
+    type: String 
   }
 });
 
@@ -112,26 +109,49 @@ const PaymentSchema = new Schema({
 });
 
 const OrderSchema = new Schema({
-  customer: { 
-    type: Schema.Types.ObjectId, 
-    ref: 'Customer', 
+  customerId: { 
+    type: String,
     required: true 
   },
   items: [OrderItemSchema],
-  design: DesignSchema,
-  shipping: ShippingSchema,
+  subtotal: {
+    type: Number,
+    required: true
+  },
+  tax: {
+    type: Number,
+    default: 0
+  },
+  shippingCost: {
+    type: Number,
+    default: 0
+  },
+  total: {
+    type: Number,
+    required: true
+  },
   status: { 
     type: String, 
-    enum: OrderStatus, 
-    default: 'Pending' 
+    enum: ['pending', 'processing', 'completed', 'cancelled'],
+    default: 'pending' 
   },
-  dueDate: { 
-    type: Date, 
-    required: true 
+  paymentMethod: {
+    type: String,
+    required: true
   },
-  payment: PaymentSchema,
-  notes: { 
-    type: String 
+  shippingAddress: {
+    street: String,
+    city: String,
+    state: String,
+    postalCode: String,
+    country: String
+  },
+  billingAddress: {
+    street: String,
+    city: String,
+    state: String,
+    postalCode: String,
+    country: String
   }
 }, { 
   timestamps: true 

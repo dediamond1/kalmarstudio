@@ -16,7 +16,11 @@ interface ProductDetailsProps {
 }
 
 export function ProductDetails({ product }: ProductDetailsProps) {
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedOptions, setSelectedOptions] = useState({
+    color: null as string | null,
+    printType: null as string | null,
+    material: null as string | null
+  });
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const { toast } = useToast();
   const { selections, toggleSelection, updateQuantity, getSelectedItems } =
@@ -103,7 +107,7 @@ export function ProductDetails({ product }: ProductDetailsProps) {
                   {Math.round(
                     ((product.basePrice - product.discountPrice) /
                       product.basePrice) *
-                      100
+                    100
                   )}
                   % OFF
                 </Badge>
@@ -133,18 +137,66 @@ export function ProductDetails({ product }: ProductDetailsProps) {
                   {product.colors.map((color: string) => (
                     <button
                       key={color}
-                      className={`w-10 h-10 rounded-full border-2 transition-all cursor-pointer ${
-                        selectedColor === color
-                          ? "border-primary"
-                          : "border-transparent hover:border-primary"
-                      }`}
+                      className={`w-10 h-10 rounded-full border-2 transition-all cursor-pointer ${selectedOptions.color === color
+                        ? "border-primary"
+                        : "border-transparent hover:border-primary"
+                        }`}
                       style={{ backgroundColor: color }}
                       aria-label={color}
                       title={color}
-                      onClick={() => setSelectedColor(color)}
+                      onClick={() => setSelectedOptions(prev => ({
+                        ...prev,
+                        color
+                      }))}
                     />
                   ))}
                 </div>
+              </div>
+            )}
+
+            {product.printTypes?.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="font-medium">Print Type</h3>
+                <div className="flex flex-wrap gap-2">
+                  {product.printTypes.map((type: string) => (
+                    <Button
+                      key={type}
+                      variant={selectedOptions.printType === type ? "default" : "outline"}
+                      onClick={() => setSelectedOptions(prev => ({
+                        ...prev,
+                        printType: type
+                      }))}
+                    >
+                      {type}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {product.materials?.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="font-medium">Material</h3>
+                <div className="flex flex-wrap gap-2">
+                  {product.materials.map((material: string) => (
+                    <Button
+                      key={material}
+                      variant={selectedOptions.material === material ? "default" : "outline"}
+                      onClick={() => setSelectedOptions(prev => ({
+                        ...prev,
+                        material
+                      }))}
+                    >
+                      {material}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {product.minOrderQuantity && (
+              <div className="bg-accent/50 p-4 rounded-lg">
+                <p className="font-medium">Minimum Order: {product.minOrderQuantity} units</p>
               </div>
             )}
 
@@ -155,11 +207,10 @@ export function ProductDetails({ product }: ProductDetailsProps) {
                   {product.availableSizes.map((size: string) => (
                     <div
                       key={size}
-                      className={`flex items-center justify-between p-2 rounded-lg transition-all ${
-                        selections[size]?.selected
-                          ? "bg-primary/10 border border-primary"
-                          : "hover:bg-accent/50 border border-transparent"
-                      }`}
+                      className={`flex items-center justify-between p-2 rounded-lg transition-all ${selections[size]?.selected
+                        ? "bg-primary/10 border border-primary"
+                        : "hover:bg-accent/50 border border-transparent"
+                        }`}
                     >
                       <div
                         className="flex-1 cursor-pointer p-2"
@@ -195,8 +246,14 @@ export function ProductDetails({ product }: ProductDetailsProps) {
                     const errors = [];
                     const selectedItems = getSelectedItems();
 
-                    if (product.colors?.length && !selectedColor) {
+                    if (product.colors?.length && !selectedOptions.color) {
                       errors.push("Please select a color");
+                    }
+                    if (product.printTypes?.length && !selectedOptions.printType) {
+                      errors.push("Please select a print type");
+                    }
+                    if (product.materials?.length && !selectedOptions.material) {
+                      errors.push("Please select a material");
                     }
 
                     if (selectedItems.length === 0) {
@@ -225,8 +282,10 @@ export function ProductDetails({ product }: ProductDetailsProps) {
                         name: product.name,
                         price: product.discountPrice || product.basePrice,
                         image: product.imageUrls?.[0] || "",
-                        color: selectedColor || undefined,
+                        color: selectedOptions.color || undefined,
+                        size, // Required for addItem
                         sizes: [{ size, quantity }],
+                        totalQuantity: quantity
                       };
                       cart.addItem(item);
                       totalItems += quantity;
@@ -236,7 +295,7 @@ export function ProductDetails({ product }: ProductDetailsProps) {
 
                     toast({
                       title: "Added to cart",
-                      description: `Added ${totalItems} item${totalItems > 1 ? "s" : ""} to your cart: ${product.name} (${selectedColor || "No color"}) - ${sizeDescriptions.join(", ")}`,
+                      description: `Added ${totalItems} item${totalItems > 1 ? "s" : ""} to your cart: ${product.name} (${selectedOptions.color || "No color"}) - ${sizeDescriptions.join(", ")}`,
                       action: (
                         <Button
                           variant="ghost"
