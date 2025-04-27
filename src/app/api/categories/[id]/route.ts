@@ -18,7 +18,7 @@ export async function GET(
 ) {
   try {
     await connectToDB();
-    const category = await CategoryModel.findById(params.id)
+    const category = await CategoryModel.findById(params?.id)
       .populate('subcategories');
 
     if (!category) {

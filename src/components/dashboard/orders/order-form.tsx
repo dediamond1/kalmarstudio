@@ -319,11 +319,11 @@ export function OrderForm({
             <TabsTrigger value="payment">Payment & Notes</TabsTrigger>
           </TabsList>
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
+          <Form {...form} onSubmit={form?.handleSubmit(onSubmit) as any}>
+            <>
               <TabsContent value="customer" className="space-y-6 mt-0">
                 <div className="space-y-6">
-                  <div>
+                  <div className="space-y-6">
                     <h3 className="text-lg font-medium mb-4">
                       Customer Information
                     </h3>
@@ -955,7 +955,7 @@ export function OrderForm({
                       : "Create Order"}
                 </Button>
               </div>
-            </form>
+            </>
           </Form>
         </Tabs>
       </CardContent>

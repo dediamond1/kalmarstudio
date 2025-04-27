@@ -3,12 +3,83 @@ import { connectToDB } from '@/lib/mongoose';
 import { ProductModel } from '@/models/schemas/product.schema';
 import { CategoryModel } from '@/models/schemas/category.schema';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await connectToDB();
-    const products = await ProductModel.find()
-      .populate('category', 'name slug') // Populate category information
-      .sort({ createdAt: -1 });
+    
+    const { searchParams } = new URL(request.url);
+    const category = searchParams.get('category');
+    const search = searchParams.get('search');
+    const sort = searchParams.get('sort');
+    const minPrice = searchParams.get('minPrice');
+    const maxPrice = searchParams.get('maxPrice');
+    const sizes = searchParams.getAll('sizes');
+    const colors = searchParams.getAll('colors');
+    const materials = searchParams.getAll('materials');
+    const printTypes = searchParams.getAll('printTypes');
+    const onSale = searchParams.get('onSale');
+
+    let query: any = { isActive: true };
+
+    // Category filter
+    if (category) {
+      query.category = category;
+    }
+
+    // Search filter
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Price range filter
+    if (minPrice || maxPrice) {
+      query.basePrice = {};
+      if (minPrice) query.basePrice.$gte = Number(minPrice);
+      if (maxPrice) query.basePrice.$lte = Number(maxPrice);
+    }
+
+    // Array filters
+    if (sizes.length) query.availableSizes = { $in: sizes };
+    if (colors.length) query.colors = { $in: colors };
+    if (materials.length) query.materials = { $in: materials };
+    if (printTypes.length) query.printTypes = { $in: printTypes };
+
+    // Sale filter
+    if (onSale === 'true') {
+      query.discountPrice = { $exists: true, $gt: 0 };
+    }
+
+    // Sorting
+    let sortOption: Record<string, 1 | -1> = { createdAt: -1 };
+    if (sort) {
+      switch (sort) {
+        case 'price-asc':
+          sortOption = { basePrice: 1 };
+          break;
+        case 'price-desc':
+          sortOption = { basePrice: -1 };
+          break;
+        case 'name-asc':
+          sortOption = { name: 1 };
+          break;
+        case 'name-desc':
+          sortOption = { name: -1 };
+          break;
+        case 'newest':
+          sortOption = { createdAt: -1 };
+          break;
+        case 'oldest':
+          sortOption = { createdAt: 1 };
+          break;
+      }
+    }
+
+    const products = await ProductModel.find(query)
+      .populate('category', 'name slug')
+      .sort(sortOption);
       
     return NextResponse.json({ 
       success: true, 

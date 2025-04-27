@@ -3,6 +3,7 @@ export interface Product {
     name: string;
     description: string;
     basePrice: number;
+    discountPrice?: number;
     category: {
       id: string;
       name: string;
@@ -14,10 +15,11 @@ export interface Product {
     materials: string[];
     minOrderQuantity: number;
     imageUrls: string[];
-    isActive: boolean;
-    createdAt: string;
-    updatedAt: string;
-  }
+  isActive: boolean;
+  isNew?: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
   
   export interface CreateProductDto {
     name: string;

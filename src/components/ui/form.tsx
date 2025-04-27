@@ -1,15 +1,47 @@
 "use client";
 
 import * as React from "react";
-
 import { useFormContext, useFormState } from "react-hook-form";
 
 const FormFieldContext = React.createContext<{ name: string } | null>(null);
 const FormItemContext = React.createContext<{ id: string } | null>(null);
 
-export const Form = ({ children }: { children: React.ReactNode }) => {
-  return <form>{children}</form>;
-};
+// Enhanced Form component that properly filters React Hook Form props
+export const Form = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentPropsWithoutRef<"div"> & {
+    onSubmit?: (e: React.FormEvent) => void;
+    handleSubmit?: any;
+    control?: any;
+    setValue?: any;
+    getValues?: any;
+    watch?: any;
+    formState?: any;
+    register?: any;
+    reset?: any;
+    trigger?: any;
+  }
+>(({ children, className, onSubmit, handleSubmit, ...props }, ref) => {
+  // Filter out React Hook Form specific props that shouldn't be passed to DOM
+  const {
+    control,
+    setValue,
+    getValues,
+    watch,
+    formState,
+    register,
+    reset,
+    trigger,
+    ...domProps
+  } = props;
+
+  return (
+    <div className={className} ref={ref} {...domProps}>
+      {children}
+    </div>
+  );
+});
+Form.displayName = "Form";
 
 export const FormField = ({
   children,

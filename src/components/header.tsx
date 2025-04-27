@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useCartStore, type CartState } from "@/store/cart";
 
 const navLinks = [
   { name: "Products", href: "/products" },
@@ -18,9 +19,25 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between px-4">
-        <Link href="/" className="flex items-center space-x-2">
-          <span className="font-bold">Kalmar Studio</span>
-        </Link>
+        <div className="flex items-center space-x-6">
+          <Link href="/" className="flex items-center space-x-2">
+            <span className="font-bold">Kalmar Studio</span>
+          </Link>
+
+          <Link href="/cart">
+            <Button variant="ghost" size="icon" className="relative" asChild>
+              <div>
+                <ShoppingCart className="h-5 w-5" />
+                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {useCartStore((state: CartState) => {
+                    const count = state.totalItems();
+                    return count > 0 ? count : null;
+                  })}
+                </span>
+              </div>
+            </Button>
+          </Link>
+        </div>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6">

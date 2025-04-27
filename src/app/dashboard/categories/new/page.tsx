@@ -1,26 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -31,69 +19,58 @@ import {
 } from "@/components/ui/select";
 import { Category } from "@/types/category";
 
-// Define form schema
-const categoryFormSchema = z.object({
-  name: z.string().min(1, "Category name is required"),
-  slug: z.string().optional(),
-  description: z.string().optional(),
-  parentId: z.string().optional().nullable(),
-  isActive: z.boolean().default(true),
-  sortOrder: z.coerce.number().int().default(0),
-  imageUrl: z.string().optional().nullable(),
-});
-
-type CategoryFormValues = z.infer<typeof categoryFormSchema>;
-
 export default function NewCategoryPage() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const parentIdFromQuery = searchParams.get("parentId");
-
-  // Setup form with default values
-  const form = useForm<CategoryFormValues>({
-    resolver: zodResolver(categoryFormSchema) as any,
-    defaultValues: {
-      name: "",
-      slug: "",
-      description: "",
-      parentId: parentIdFromQuery || null,
-      isActive: true,
-      sortOrder: 0,
-      imageUrl: "",
-    },
+  const [formData, setFormData] = useState({
+    name: "",
+    slug: "",
+    description: "",
+    parentId: "",
+    isActive: true,
+    sortOrder: 0,
+    imageUrl: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const router = useRouter();
 
-  // Fetch categories for parent selection
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        setLoading(true);
+        setIsLoading(true);
         const response = await fetch("/api/categories");
-        const result = await response.json();
+        const data = await response.json();
 
-        if (!result.success) {
-          throw new Error(result.error || "Failed to fetch categories");
+        if (!data.success) {
+          throw new Error(data.error || "Failed to fetch categories");
         }
 
-        setCategories(result.data);
+        setCategories(data.data);
       } catch (error) {
         console.error("Error fetching categories:", error);
         toast.error(
-          error instanceof Error ? error.message : "Failed to fetch categories"
+          error instanceof Error ? error.message : "Failed to load categories"
         );
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
     fetchCategories();
   }, []);
 
-  async function onSubmit(values: CategoryFormValues) {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsSubmitting(true);
+    setErrors({});
+
+    // Basic validation
+    if (!formData.name.trim()) {
+      setErrors({ name: "Category name is required" });
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const response = await fetch("/api/categories", {
@@ -101,7 +78,10 @@ export default function NewCategoryPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          ...formData,
+          parentId: formData.parentId || null,
+        }),
       });
 
       const data = await response.json();
@@ -117,35 +97,32 @@ export default function NewCategoryPage() {
     } finally {
       setIsSubmitting(false);
     }
-  }
-
-  // Generate slug from name
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .replace(/\s+/g, "-") // Replace spaces with -
-      .replace(/[^\w\-]+/g, "") // Remove all non-word chars
-      .replace(/\-\-+/g, "-") // Replace multiple - with single -
-      .trim(); // Trim - from start and end
   };
 
-  // Auto-generate slug when name changes
-  useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if (name === "name") {
-        const currentSlug = form.getValues().slug;
-        // Only auto-generate if slug is empty or hasn't been manually edited
-        if (
-          !currentSlug ||
-          currentSlug === generateSlug(form.getValues().name || "")
-        ) {
-          form.setValue("slug", generateSlug(value.name || ""));
-        }
-      }
-    });
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-    return () => subscription.unsubscribe();
-  }, [form]);
+  const handleSwitchChange = (checked: boolean) => {
+    setFormData((prev) => ({ ...prev, isActive: checked }));
+  };
+
+  const handleSelectChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, parentId: value }));
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <div className="text-center">
+          <p>Loading categories...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto pb-10">
@@ -161,199 +138,159 @@ export default function NewCategoryPage() {
             Create New Category
           </h2>
           <p className="text-muted-foreground">
-            {parentIdFromQuery
-              ? "Add a new subcategory to organize your products"
-              : "Add a new category to organize your products"}
+            Add a new category to your product catalog
           </p>
         </div>
       </div>
 
       <Card>
         <CardContent className="p-6">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Category Name */}
-                <FormField
-                  control={form.control}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Category Name */}
+              <div className="space-y-2">
+                <label htmlFor="name" className="block text-sm font-medium">
+                  Category Name *
+                </label>
+                <Input
+                  id="name"
                   name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter category name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  placeholder="Enter category name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
                 />
+                {errors.name && (
+                  <p className="text-sm font-medium text-destructive">
+                    {errors.name}
+                  </p>
+                )}
+              </div>
 
-                {/* Category Slug */}
-                <FormField
-                  control={form.control}
+              {/* URL Slug */}
+              <div className="space-y-2">
+                <label htmlFor="slug" className="block text-sm font-medium">
+                  URL Slug
+                </label>
+                <Input
+                  id="slug"
                   name="slug"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>URL Slug</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter URL slug"
-                          {...field}
-                          value={field.value || ""}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Used in URLs. Auto-generated but can be edited.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  placeholder="Enter URL slug"
+                  value={formData.slug}
+                  onChange={handleChange}
                 />
+                <p className="text-sm text-muted-foreground">
+                  Will be auto-generated if left blank
+                </p>
               </div>
+            </div>
 
-              {/* Description */}
-              <FormField
-                control={form.control}
+            {/* Description */}
+            <div className="space-y-2">
+              <label
+                htmlFor="description"
+                className="block text-sm font-medium"
+              >
+                Description
+              </label>
+              <Textarea
+                id="description"
                 name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Enter category description (optional)"
-                        className="resize-none h-24"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                placeholder="Enter category description (optional)"
+                className="resize-none h-24"
+                value={formData.description}
+                onChange={handleChange}
               />
+            </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Parent Category */}
-                <FormField
-                  control={form.control}
-                  name="parentId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Parent Category</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value || undefined}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="None (Top-level category)" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="">
-                            None (Top-level category)
-                          </SelectItem>
-                          {categories.map((category) => (
-                            <SelectItem
-                              key={category.id}
-                              value={category.id}
-                              disabled={
-                                category.id === form.getValues().parentId
-                              }
-                            >
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Select a parent for a subcategory, or none for a
-                        top-level category
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Sort Order */}
-                <FormField
-                  control={form.control}
-                  name="sortOrder"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Sort Order</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} min={0} />
-                      </FormControl>
-                      <FormDescription>
-                        Lower numbers appear first in listings
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Image URL */}
-              <FormField
-                control={form.control}
-                name="imageUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Image URL</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Enter image URL (optional)"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Optional image to represent this category
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Active Status */}
-              <FormField
-                control={form.control}
-                name="isActive"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">
-                        Category Active
-                      </FormLabel>
-                      <FormDescription>
-                        Inactive categories won't show in the product catalog
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              {/* Form Actions */}
-              <div className="flex justify-end gap-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => router.push("/dashboard/categories")}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Parent Category */}
+              <div className="space-y-2">
+                <label htmlFor="parentId" className="block text-sm font-medium">
+                  Parent Category
+                </label>
+                <Select
+                  onValueChange={handleSelectChange}
+                  value={formData.parentId}
                 >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Creating..." : "Create Category"}
-                </Button>
+                  <SelectTrigger>
+                    <SelectValue placeholder="None (Top-level category)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None (Top-level category)</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </form>
-          </Form>
+
+              {/* Sort Order */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="sortOrder"
+                  className="block text-sm font-medium"
+                >
+                  Sort Order
+                </label>
+                <Input
+                  id="sortOrder"
+                  name="sortOrder"
+                  type="number"
+                  min={0}
+                  value={formData.sortOrder}
+                  onChange={handleChange}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Lower numbers appear first
+                </p>
+              </div>
+            </div>
+
+            {/* Image URL */}
+            <div className="space-y-2">
+              <label htmlFor="imageUrl" className="block text-sm font-medium">
+                Image URL
+              </label>
+              <Input
+                id="imageUrl"
+                name="imageUrl"
+                placeholder="Enter image URL (optional)"
+                value={formData.imageUrl}
+                onChange={handleChange}
+              />
+            </div>
+
+            {/* Active Status */}
+            <div className="flex items-center justify-between rounded-lg border p-4 shadow-sm">
+              <div className="space-y-0.5">
+                <label className="text-base font-medium">Category Active</label>
+                <p className="text-sm text-muted-foreground">
+                  Inactive categories won't show in the product catalog
+                </p>
+              </div>
+              <Switch
+                checked={formData.isActive}
+                onCheckedChange={handleSwitchChange}
+              />
+            </div>
+
+            {/* Form Actions */}
+            <div className="flex justify-end gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.push("/dashboard/categories")}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Creating..." : "Create Category"}
+              </Button>
+            </div>
+          </form>
         </CardContent>
       </Card>
     </div>
