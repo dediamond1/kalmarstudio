@@ -1,15 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Star, Heart, Share2 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { useProductSelection } from "@/hooks/use-product-selection";
-import { QuantityInput } from "@/components/products/quantity-input";
 import { Product } from "@/types/product";
-import { useCartStore } from "@/store/cart";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ImageGallery } from "@/components/products/ImageGallery";
+import { ProductOptions } from "@/components/products/ProductOptions";
+import { AddToCartButton } from "@/components/products/AddToCartButton";
+import { useProductSelection } from "@/hooks/use-product-selection";
+import {
+  Truck,
+  ShieldCheck,
+  RotateCcw,
+  Star,
+  StarHalf,
+  Package,
+} from "lucide-react";
 
 interface ProductDetailsProps {
   product: Product;
@@ -17,325 +24,322 @@ interface ProductDetailsProps {
 
 export function ProductDetails({ product }: ProductDetailsProps) {
   const [selectedOptions, setSelectedOptions] = useState({
-    color: null as string | null,
-    printType: null as string | null,
-    material: null as string | null
+    color: product.colors?.[0] || null,
+    printType: product.printTypes?.[0] || null,
+    material: product.materials?.[0] || null,
   });
-  const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const { toast } = useToast();
+
   const { selections, toggleSelection, updateQuantity, getSelectedItems } =
     useProductSelection(product?.availableSizes || []);
 
-  if (!product) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="text-center py-12">
-          <h2 className="text-2xl font-bold">Product not found</h2>
-          <p className="text-muted-foreground mt-2">
-            The product you're looking for doesn't exist or may have been
-            removed
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const handleOptionChange = (
+    optionType: "color" | "printType" | "material",
+    value: string
+  ) => {
+    setSelectedOptions((prev) => ({
+      ...prev,
+      [optionType]: value,
+    }));
+  };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Product Images */}
-        <div className="space-y-4">
-          <div className="aspect-square relative rounded-lg overflow-hidden bg-muted/50">
-            {product.imageUrls?.[0] ? (
-              <Image
-                src={product.imageUrls[0]}
-                alt={product.name}
-                fill
-                className="object-cover"
-                priority
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <span className="text-muted-foreground">
-                  No image available
-                </span>
+    <div className="bg-background">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-8">
+          <a
+            href="/products"
+            className="hover:text-foreground transition-colors"
+          >
+            Products
+          </a>
+          <span>/</span>
+          <a
+            href={`/products?category=${product.category.id}`}
+            className="hover:text-foreground transition-colors"
+          >
+            {product.category.name}
+          </a>
+          <span>/</span>
+          <span className="text-foreground">{product.name}</span>
+        </nav>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          {/* Product Images */}
+          <ImageGallery images={product.imageUrls} productName={product.name} />
+
+          {/* Product Details */}
+          <div className="flex flex-col space-y-8">
+            <div>
+              <div className="flex justify-between items-start">
+                <div>
+                  <h1 className="text-3xl font-bold tracking-tight">
+                    {product.name}
+                  </h1>
+                  <div className="flex items-center mt-2 gap-4">
+                    <div className="flex items-center">
+                      <div className="flex">
+                        {[1, 2, 3, 4].map((i) => (
+                          <Star
+                            key={i}
+                            className="h-4 w-4 fill-yellow-400 text-yellow-400"
+                          />
+                        ))}
+                        <StarHalf className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      </div>
+                      <span className="ml-2 text-sm text-muted-foreground">
+                        (24 reviews)
+                      </span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      SKU: {product.id.substring(0, 8).toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {product.isNew && (
+                    <Badge className="font-semibold bg-blue-500">NEW</Badge>
+                  )}
+                  {product.discountPrice && (
+                    <Badge className="font-semibold bg-red-500">SALE</Badge>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
-          <div className="grid grid-cols-4 gap-2">
-            {product.imageUrls?.slice(1).map((image: string, index: number) => (
-              <div
-                key={index}
-                className="aspect-square relative rounded-md overflow-hidden"
-              >
-                <Image
-                  src={image}
-                  alt={`${product.name} - ${index + 1}`}
-                  fill
-                  className="object-cover"
-                />
+
+              <div className="mt-4">
+                {product.discountPrice ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-3xl font-bold">
+                      ${product.discountPrice.toFixed(2)}
+                    </span>
+                    <span className="text-lg text-muted-foreground line-through">
+                      ${product.basePrice.toFixed(2)}
+                    </span>
+                    <Badge variant="destructive" className="font-semibold">
+                      {Math.round(
+                        ((product.basePrice - product.discountPrice) /
+                          product.basePrice) *
+                          100
+                      )}
+                      % OFF
+                    </Badge>
+                  </div>
+                ) : (
+                  <span className="text-3xl font-bold">
+                    ${product.basePrice.toFixed(2)}
+                  </span>
+                )}
               </div>
-            ))}
+            </div>
+
+            <Separator />
+
+            <div>
+              <p className="text-base text-muted-foreground leading-relaxed">
+                {product.description}
+              </p>
+            </div>
+
+            <Separator />
+
+            {/* Product Options */}
+            <ProductOptions
+              product={product}
+              selectedOptions={selectedOptions}
+              onOptionChange={handleOptionChange}
+              selections={selections}
+              toggleSelection={toggleSelection}
+              updateQuantity={updateQuantity}
+            />
+
+            <Separator />
+
+            {/* Add to Cart Button */}
+            <AddToCartButton
+              product={product}
+              selectedOptions={selectedOptions}
+              selections={selections}
+              getSelectedItems={getSelectedItems}
+            />
+
+            {/* Product Benefits */}
+            <div className="grid grid-cols-2 gap-4 mt-6">
+              <div className="flex items-center gap-2">
+                <Truck className="h-5 w-5 text-primary" />
+                <span className="text-sm">Free shipping over $100</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <RotateCcw className="h-5 w-5 text-primary" />
+                <span className="text-sm">30-day returns</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-primary" />
+                <span className="text-sm">Quality guarantee</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Package className="h-5 w-5 text-primary" />
+                <span className="text-sm">Secure packaging</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Product Details */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold tracking-tight">
-              {product.name}
-            </h1>
-            <div className="flex items-center gap-1">
-              <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-              <span className="font-medium">4.8</span>
-              <span className="text-muted-foreground text-sm">
-                (24 reviews)
-              </span>
-            </div>
-          </div>
+        {/* Product Details Tabs */}
+        <div className="mt-16">
+          <Tabs defaultValue="details">
+            <TabsList className="w-full border-b bg-transparent p-0 justify-start gap-8">
+              <TabsTrigger
+                value="details"
+                className="border-b-2 border-transparent data-[state=active]:border-primary rounded-none py-3 px-1 data-[state=active]:text-primary"
+              >
+                Product Details
+              </TabsTrigger>
+              <TabsTrigger
+                value="materials"
+                className="border-b-2 border-transparent data-[state=active]:border-primary rounded-none py-3 px-1 data-[state=active]:text-primary"
+              >
+                Materials
+              </TabsTrigger>
+              <TabsTrigger
+                value="sizing"
+                className="border-b-2 border-transparent data-[state=active]:border-primary rounded-none py-3 px-1 data-[state=active]:text-primary"
+              >
+                Sizing Guide
+              </TabsTrigger>
+              <TabsTrigger
+                value="reviews"
+                className="border-b-2 border-transparent data-[state=active]:border-primary rounded-none py-3 px-1 data-[state=active]:text-primary"
+              >
+                Customer Reviews
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="details" className="pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <h3 className="text-lg font-medium mb-3">
+                    Product Description
+                  </h3>
+                  <p className="text-muted-foreground">{product.description}</p>
 
-          <div className="flex items-center gap-2">
-            {product.discountPrice ? (
-              <>
-                <span className="text-3xl font-bold">
-                  ${product.discountPrice.toFixed(2)}
-                </span>
-                <span className="text-lg text-muted-foreground line-through">
-                  ${product.basePrice.toFixed(2)}
-                </span>
-                <Badge variant="destructive" className="font-semibold">
-                  {Math.round(
-                    ((product.basePrice - product.discountPrice) /
-                      product.basePrice) *
-                    100
-                  )}
-                  % OFF
-                </Badge>
-              </>
-            ) : (
-              <span className="text-3xl font-bold">
-                ${product.basePrice.toFixed(2)}
-              </span>
-            )}
-            {product.isNew && (
-              <Badge variant="secondary" className="font-semibold">
-                NEW
-              </Badge>
-            )}
-          </div>
+                  <h3 className="text-lg font-medium mt-6 mb-3">Features</h3>
+                  <ul className="list-disc pl-5 text-muted-foreground">
+                    <li>Premium quality materials</li>
+                    <li>Professionally printed with care</li>
+                    <li>Long-lasting and durable</li>
+                    <li>Perfect for all occasions</li>
+                  </ul>
+                </div>
 
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-medium">Description</h3>
-              <p className="text-muted-foreground">{product.description}</p>
-            </div>
-
-            {product.colors?.length > 0 && (
-              <div className="space-y-3">
-                <h3 className="font-medium">Color</h3>
-                <div className="flex flex-wrap gap-3">
-                  {product.colors.map((color: string) => (
-                    <button
-                      key={color}
-                      className={`w-10 h-10 rounded-full border-2 transition-all cursor-pointer ${selectedOptions.color === color
-                        ? "border-primary"
-                        : "border-transparent hover:border-primary"
-                        }`}
-                      style={{ backgroundColor: color }}
-                      aria-label={color}
-                      title={color}
-                      onClick={() => setSelectedOptions(prev => ({
-                        ...prev,
-                        color
-                      }))}
-                    />
-                  ))}
+                <div>
+                  <h3 className="text-lg font-medium mb-3">Specifications</h3>
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-2 border-b pb-2">
+                      <span className="font-medium">Print Types</span>
+                      <span className="text-muted-foreground">
+                        {product.printTypes.join(", ")}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 border-b pb-2">
+                      <span className="font-medium">Available Sizes</span>
+                      <span className="text-muted-foreground">
+                        {product.availableSizes.join(", ")}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 border-b pb-2">
+                      <span className="font-medium">Available Colors</span>
+                      <span className="text-muted-foreground">
+                        {product.colors.join(", ")}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 border-b pb-2">
+                      <span className="font-medium">Materials</span>
+                      <span className="text-muted-foreground">
+                        {product.materials.join(", ")}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 border-b pb-2">
+                      <span className="font-medium">Minimum Order</span>
+                      <span className="text-muted-foreground">
+                        {product.minOrderQuantity} units
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            )}
-
-            {product.printTypes?.length > 0 && (
-              <div className="space-y-3">
-                <h3 className="font-medium">Print Type</h3>
-                <div className="flex flex-wrap gap-2">
-                  {product.printTypes.map((type: string) => (
-                    <Button
-                      key={type}
-                      variant={selectedOptions.printType === type ? "default" : "outline"}
-                      onClick={() => setSelectedOptions(prev => ({
-                        ...prev,
-                        printType: type
-                      }))}
-                    >
-                      {type}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {product.materials?.length > 0 && (
-              <div className="space-y-3">
-                <h3 className="font-medium">Material</h3>
-                <div className="flex flex-wrap gap-2">
-                  {product.materials.map((material: string) => (
-                    <Button
-                      key={material}
-                      variant={selectedOptions.material === material ? "default" : "outline"}
-                      onClick={() => setSelectedOptions(prev => ({
-                        ...prev,
-                        material
-                      }))}
-                    >
-                      {material}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {product.minOrderQuantity && (
-              <div className="bg-accent/50 p-4 rounded-lg">
-                <p className="font-medium">Minimum Order: {product.minOrderQuantity} units</p>
-              </div>
-            )}
-
-            {product.availableSizes?.length > 0 && (
+            </TabsContent>
+            <TabsContent value="materials" className="pt-6">
               <div className="space-y-4">
-                <h3 className="font-medium">Size & Quantity</h3>
-                <div className="space-y-3">
-                  {product.availableSizes.map((size: string) => (
-                    <div
-                      key={size}
-                      className={`flex items-center justify-between p-2 rounded-lg transition-all ${selections[size]?.selected
-                        ? "bg-primary/10 border border-primary"
-                        : "hover:bg-accent/50 border border-transparent"
-                        }`}
-                    >
-                      <div
-                        className="flex-1 cursor-pointer p-2"
-                        onClick={() => toggleSelection(size)}
-                      >
-                        <span className="font-medium">{size}</span>
-                        {selections[size]?.selected && (
-                          <span className="ml-2 text-sm text-muted-foreground">
-                            (Selected)
-                          </span>
-                        )}
-                      </div>
-                      <QuantityInput
-                        value={selections[size].quantity}
-                        onChange={(qty) => updateQuantity(size, qty)}
-                        selected={selections[size]?.selected}
-                        disabled={!selections[size]?.selected}
-                      />
+                <h3 className="text-lg font-medium">Materials Information</h3>
+                <p className="text-muted-foreground">
+                  Our products are made with the finest materials to ensure
+                  quality and durability. We carefully select each material to
+                  provide the best printing surface and comfort.
+                </p>
+
+                <div className="mt-6 space-y-6">
+                  {product.materials.map((material) => (
+                    <div key={material} className="space-y-2">
+                      <h4 className="font-medium">{material}</h4>
+                      <p className="text-muted-foreground">
+                        Information about {material} properties, care
+                        instructions, and benefits.
+                      </p>
                     </div>
                   ))}
                 </div>
               </div>
-            )}
+            </TabsContent>
+            <TabsContent value="sizing" className="pt-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Sizing Guide</h3>
+                <p className="text-muted-foreground mb-6">
+                  Use this guide to find the right size for your needs. If
+                  you're between sizes, we recommend sizing up for a more
+                  comfortable fit.
+                </p>
 
-            <div className="pt-6 space-y-4 border-t">
-              <Button
-                size="lg"
-                className="w-full h-14 text-lg"
-                onClick={() => {
-                  // Validate all required selections
-                  setIsAddingToCart(true);
-                  try {
-                    const errors = [];
-                    const selectedItems = getSelectedItems();
-
-                    if (product.colors?.length && !selectedOptions.color) {
-                      errors.push("Please select a color");
-                    }
-                    if (product.printTypes?.length && !selectedOptions.printType) {
-                      errors.push("Please select a print type");
-                    }
-                    if (product.materials?.length && !selectedOptions.material) {
-                      errors.push("Please select a material");
-                    }
-
-                    if (selectedItems.length === 0) {
-                      errors.push(
-                        "Please select at least one size and quantity"
-                      );
-                    }
-
-                    if (errors.length > 0) {
-                      toast({
-                        variant: "destructive",
-                        title: "Missing selections",
-                        description: errors.join("\n"),
-                      });
-                      return;
-                    }
-
-                    const cart = useCartStore.getState();
-                    let totalItems = 0;
-                    let sizeDescriptions: string[] = [];
-
-                    // Optimistically update UI
-                    const newItems = selectedItems.map(({ size, quantity }) => {
-                      const item = {
-                        productId: product.id,
-                        name: product.name,
-                        price: product.discountPrice || product.basePrice,
-                        image: product.imageUrls?.[0] || "",
-                        color: selectedOptions.color || undefined,
-                        size, // Required for addItem
-                        sizes: [{ size, quantity }],
-                        totalQuantity: quantity
-                      };
-                      cart.addItem(item);
-                      totalItems += quantity;
-                      sizeDescriptions.push(`${quantity} × ${size}`);
-                      return item;
-                    });
-
-                    toast({
-                      title: "Added to cart",
-                      description: `Added ${totalItems} item${totalItems > 1 ? "s" : ""} to your cart: ${product.name} (${selectedOptions.color || "No color"}) - ${sizeDescriptions.join(", ")}`,
-                      action: (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            newItems.forEach((item) => {
-                              cart.removeItem(item.productId);
-                            });
-                          }}
-                        >
-                          Undo
-                        </Button>
-                      ),
-                    });
-                  } finally {
-                    setIsAddingToCart(false);
-                  }
-                }}
-              >
-                {isAddingToCart ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="animate-spin">↻</span>
-                    Adding...
-                  </span>
-                ) : (
-                  `Add to Cart - $${product.discountPrice?.toFixed(2) || product.basePrice.toFixed(2)}`
-                )}
-              </Button>
-              <div className="flex gap-4">
-                <Button variant="outline" size="lg" className="flex-1">
-                  <Heart className="w-5 h-5 mr-2" />
-                  Save
-                </Button>
-                <Button variant="outline" size="lg" className="flex-1">
-                  <Share2 className="w-5 h-5 mr-2" />
-                  Share
-                </Button>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-muted">
+                        <th className="border p-2 text-left">Size</th>
+                        <th className="border p-2 text-left">Width (cm)</th>
+                        <th className="border p-2 text-left">Height (cm)</th>
+                        <th className="border p-2 text-left">
+                          Recommended For
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {product.availableSizes.map((size) => (
+                        <tr key={size} className="border-b">
+                          <td className="border p-2 font-medium">{size}</td>
+                          <td className="border p-2">Example width</td>
+                          <td className="border p-2">Example height</td>
+                          <td className="border p-2">Recommendation</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          </div>
+            </TabsContent>
+            <TabsContent value="reviews" className="pt-6">
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium">Customer Reviews</h3>
+                  <button className="text-primary hover:underline">
+                    Write a Review
+                  </button>
+                </div>
+
+                <div className="border rounded-lg p-6 space-y-4">
+                  <p className="text-center text-muted-foreground">
+                    No reviews yet. Be the first to review this product!
+                  </p>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>
