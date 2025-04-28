@@ -1,111 +1,53 @@
-import { Schema, model, models } from 'mongoose';
+import { model, models, Schema } from "mongoose";
 
-// Define enum values for order status and payment status
-const OrderStatus = ['Pending', 'Processing', 'Completed', 'Shipped', 'Cancelled'] as const;
-const PaymentStatus = ['Pending', 'Paid', 'Refunded'] as const;
-const ShippingMethods = ['Standard', 'Express', 'Priority', 'Pickup'] as const;
-
-const OrderItemSchema = new Schema({
-  productId: { 
-    type: String,
-    required: true 
-  },
-  name: {
-    type: String,
-    required: true
-  },
-  image: {
-    type: String,
-    required: true
-  },
-  quantity: { 
-    type: Number, 
-    required: true, 
-    min: 1 
-  },
-  price: { 
-    type: Number, 
-    required: true, 
-    min: 0 
-  },
-  color: { 
-    type: String 
-  },
-  size: { 
-    type: String 
-  }
+// Define OrderItem schema first since it's referenced by OrderSchema
+const OrderItemSizeSchema = new Schema({
+  size: { type: String, required: true },
+  quantity: { type: Number, required: true }
 });
 
-const ShippingSchema = new Schema({
-  address: {
-    street: { type: String },
-    city: { type: String },
-    state: { type: String },
-    postalCode: { type: String },
-    country: { type: String }
-  },
+const OrderItemSchema = new Schema({
+  productId: { type: String, required: true },
+  name: { type: String, required: true },
+  price: { type: Number, required: true },
+  image: { type: String, required: true },
+  color: { type: String },
+  sizes: [OrderItemSizeSchema],
+  totalQuantity: { type: Number, required: true }
+});
+
+// Dummy payment schema for testing
+const PaymentSchema = new Schema({
   method: { 
     type: String, 
-    enum: ShippingMethods, 
-    default: 'Standard' 
+    required: true,
+    enum: ['credit_card', 'paypal', 'bank_transfer']
   },
-  cost: { 
-    type: Number, 
-    default: 0 
+  transactionId: { type: String },
+  status: { 
+    type: String,
+    default: 'pending',
+    enum: ['pending', 'completed', 'failed', 'refunded']
+  },
+  amount: { type: Number, required: true }
+});
+
+// Basic shipping schema
+const ShippingSchema = new Schema({
+  method: {
+    type: String,
+    required: true,
+    enum: ['standard', 'express', 'priority']
   },
   trackingNumber: { type: String },
+  cost: { type: Number, required: true },
   estimatedDelivery: { type: Date }
 });
 
+// Placeholder design schema
 const DesignSchema = new Schema({
-  description: { 
-    type: String,
-    required: true 
-  },
-  placement: { 
-    type: String, 
-    default: 'Front Center' 
-  },
-  colors: [{ 
-    type: String 
-  }],
-  mockupUrl: { 
-    type: String 
-  }
-});
-
-const PaymentSchema = new Schema({
-  status: { 
-    type: String, 
-    enum: PaymentStatus, 
-    default: 'Pending' 
-  },
-  method: { 
-    type: String, 
-    default: 'Credit Card' 
-  },
-  amount: { 
-    type: Number, 
-    required: true, 
-    min: 0 
-  },
-  tax: { 
-    type: Number, 
-    default: 0 
-  },
-  discount: { 
-    type: Number, 
-    default: 0 
-  },
-  shipping: {
-    type: Number,
-    default: 0
-  },
-  total: { 
-    type: Number, 
-    required: true, 
-    min: 0 
-  }
+  notes: { type: String },
+  options: { type: Schema.Types.Mixed }
 });
 
 const OrderSchema = new Schema({
@@ -113,7 +55,16 @@ const OrderSchema = new Schema({
     type: String,
     required: true 
   },
-  items: [OrderItemSchema],
+  items: {
+    type: [OrderItemSchema],
+    required: true,
+    validate: {
+      validator: function(v: Array<any>) {
+        return v.length > 0;
+      },
+      message: 'Order must have at least one item'
+    }
+  },
   subtotal: {
     type: Number,
     required: true
@@ -132,12 +83,21 @@ const OrderSchema = new Schema({
   },
   status: { 
     type: String, 
-    enum: ['pending', 'processing', 'completed', 'cancelled'],
+    enum: ['pending', 'processing', 'completed', 'shipped', 'cancelled'],
     default: 'pending' 
   },
   paymentMethod: {
     type: String,
     required: true
+  },
+  design: {
+    type: DesignSchema
+  },
+  payment: {
+    type: PaymentSchema
+  },
+  shipping: {
+    type: ShippingSchema
   },
   shippingAddress: {
     street: String,
@@ -152,6 +112,9 @@ const OrderSchema = new Schema({
     state: String,
     postalCode: String,
     country: String
+  },
+  notes: {
+    type: String
   }
 }, { 
   timestamps: true 

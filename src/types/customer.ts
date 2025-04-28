@@ -14,6 +14,8 @@ export interface Customer {
     };
     taxId?: string;
     notes?: string;
+    customerType?: 'individual' | 'business' | 'government' | 'guest';
+    status?: 'active' | 'inactive' | 'pending';
     createdAt: string;
     updatedAt: string;
   }
@@ -32,6 +34,8 @@ export interface Customer {
     };
     taxId?: string;
     notes?: string;
+    customerType?: 'individual' | 'business' | 'government' | 'guest';
+    status?: 'active' | 'inactive' | 'pending';
   }
   
   export interface UpdateCustomerDto extends Partial<CreateCustomerDto> {}

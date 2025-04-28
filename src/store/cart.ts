@@ -1,3 +1,4 @@
+// src/store/cart.ts
 "use client";
 
 import { create } from 'zustand';
@@ -22,7 +23,7 @@ export interface CartItem {
 
 export interface CartState {
   items: CartItem[];
-  addItem: (item: Omit<CartItem, 'sizes'> & { size: string }) => void;
+  addItem: (item: Omit<CartItem, 'sizes' | 'totalQuantity'> & { size: string; quantity?: number }) => void;
   addSize: (productId: string, size: string, quantity?: number) => void;
   removeItem: (productId: string) => void;
   removeSize: (productId: string, size: string) => void;
@@ -34,27 +35,33 @@ export interface CartState {
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
-      _hasHydrated: false,
       items: [],
+      
       addItem: (item) => {
-        const existingItem = get().items.find(
+        const { size, quantity = 1, ...rest } = item;
+        const existingItemIndex = get().items.findIndex(
           (i) => 
             i.productId === item.productId && 
-            i.color === item.color
+            i.color === item.color && 
+            i.printType === item.printType && 
+            i.material === item.material
         );
 
-        if (existingItem) {
-          return get().addSize(item.productId, item.size);
+        if (existingItemIndex >= 0) {
+          // Item with same properties exists, add or update size
+          get().addSize(item.productId, size, quantity);
+        } else {
+          // Add new item
+          set((state) => ({
+            items: [...state.items, { 
+              ...rest, 
+              sizes: [{ size, quantity }],
+              totalQuantity: quantity
+            }],
+          }));
         }
-
-        set((state) => ({
-          items: [...state.items, { 
-            ...item, 
-            sizes: [{ size: item.size, quantity: 1 }],
-            totalQuantity: 1
-          }],
-        }));
       },
+      
       addSize: (productId, size, quantity = 1) => {
         set((state) => ({
           items: state.items.map((item) => {
@@ -81,11 +88,13 @@ export const useCartStore = create<CartState>()(
           })
         }));
       },
+      
       removeItem: (productId) => {
         set((state) => ({
           items: state.items.filter((i) => i.productId !== productId),
         }));
       },
+      
       removeSize: (productId, size) => {
         set((state) => ({
           items: state.items
@@ -104,6 +113,7 @@ export const useCartStore = create<CartState>()(
             .filter((item): item is CartItem => item !== null)
         }));
       },
+      
       updateSizeQuantity: (productId, size, quantity) => {
         if (quantity <= 0) {
           return get().removeSize(productId, size);
@@ -111,12 +121,26 @@ export const useCartStore = create<CartState>()(
 
         set((state) => ({
           items: state.items.map((item) => {
+            // Find the matching item
             if (item.productId !== productId) return item;
             
-            const newSizes = item.sizes.map((s) =>
-              s.size === size ? { ...s, quantity } : s
-            );
-
+            // Find the size in this item
+            const sizeIndex = item.sizes.findIndex(s => s.size === size);
+            
+            // If size doesn't exist, add it
+            if (sizeIndex === -1) {
+              const newSizes = [...item.sizes, { size, quantity }];
+              return {
+                ...item,
+                sizes: newSizes,
+                totalQuantity: newSizes.reduce((sum, s) => sum + s.quantity, 0)
+              };
+            }
+            
+            // Update existing size
+            const newSizes = [...item.sizes];
+            newSizes[sizeIndex] = { ...newSizes[sizeIndex], quantity };
+            
             return {
               ...item,
               sizes: newSizes,
@@ -125,9 +149,11 @@ export const useCartStore = create<CartState>()(
           })
         }));
       },
+      
       clearCart: () => {
         set({ items: [] });
       },
+      
       totalItems: () => {
         return get().items.reduce(
           (total, item) => total + item.sizes.reduce(

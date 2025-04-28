@@ -38,7 +38,7 @@ export function useProductSelection(
       [size]: {
         ...prev[size],
         selected: !prev[size].selected,
-        quantity: !prev[size].selected ? 1 : 0,
+        // Quantity remains unchanged during selection toggle
       },
     }));
   };

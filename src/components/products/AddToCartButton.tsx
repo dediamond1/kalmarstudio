@@ -1,3 +1,4 @@
+// src/components/products/AddToCartButton.tsx
 "use client";
 
 import { useState } from "react";
@@ -14,13 +15,12 @@ interface AddToCartButtonProps {
     printType: string | null;
     material: string | null;
   };
-  selections: Record<
-    string,
-    {
+  selections: {
+    [key: string]: {
       selected: boolean;
       quantity: number;
-    }
-  >;
+    };
+  };
   getSelectedItems: () => Array<{ size: string; quantity: number }>;
 }
 
@@ -33,15 +33,15 @@ export function AddToCartButton({
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [added, setAdded] = useState(false);
   const { toast } = useToast();
-  const cart = useCartStore();
+  const { addItem, updateSizeQuantity } = useCartStore();
 
   const handleAddToCart = () => {
-    // Validate all required selections
     setIsAddingToCart(true);
     try {
       const errors = [];
       const selectedItems = getSelectedItems();
 
+      // Validation
       if (product.colors?.length && !selectedOptions.color) {
         errors.push("Please select a color");
       }
@@ -51,7 +51,6 @@ export function AddToCartButton({
       if (product.materials?.length && !selectedOptions.material) {
         errors.push("Please select a material");
       }
-
       if (selectedItems.length === 0) {
         errors.push("Please select at least one size and quantity");
       }
@@ -62,31 +61,39 @@ export function AddToCartButton({
           title: "Missing selections",
           description: errors.join("\n"),
         });
+        setIsAddingToCart(false);
         return;
       }
 
-      let totalItems = 0;
-      let sizeDescriptions: string[] = [];
+      // Create the base cart item
+      const cartItemBase = {
+        productId: product.id,
+        name: product.name,
+        price: product.discountPrice || product.basePrice,
+        image: product.imageUrls?.[0] || "",
+        color: selectedOptions.color || undefined,
+        printType: selectedOptions.printType || undefined,
+        material: selectedOptions.material || undefined,
+      };
 
-      // Optimistically update UI
-      const newItems = selectedItems.map(({ size, quantity }) => {
-        const item = {
-          productId: product.id,
-          name: product.name,
-          price: product.discountPrice || product.basePrice,
-          image: product.imageUrls?.[0] || "",
-          color: selectedOptions.color || undefined,
-          printType: selectedOptions.printType || undefined,
-          material: selectedOptions.material || undefined,
-          size, // Required for addItem
-          sizes: [{ size, quantity }],
-          totalQuantity: quantity,
-        };
-        cart.addItem(item);
-        totalItems += quantity;
-        sizeDescriptions.push(`${quantity} × ${size}`);
-        return item;
-      });
+      // Add all selected sizes with their quantities
+      if (selectedItems.length > 0) {
+        selectedItems.forEach(({ size, quantity }) => {
+          addItem({
+            ...cartItemBase,
+            size,
+            quantity,
+          });
+        });
+      }
+
+      let totalItems = selectedItems.reduce(
+        (sum, { quantity }) => sum + quantity,
+        0
+      );
+      let sizeDescriptions = selectedItems.map(
+        ({ size, quantity }) => `${quantity} × ${size}`
+      );
 
       setAdded(true);
       setTimeout(() => setAdded(false), 2000);
@@ -98,19 +105,6 @@ export function AddToCartButton({
         } to your cart: ${product.name} ${
           selectedOptions.color ? `(${selectedOptions.color})` : ""
         } - ${sizeDescriptions.join(", ")}`,
-        action: (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              newItems.forEach((item) => {
-                cart.removeItem(item.productId);
-              });
-            }}
-          >
-            Undo
-          </Button>
-        ),
       });
     } finally {
       setIsAddingToCart(false);

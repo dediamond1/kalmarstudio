@@ -36,21 +36,42 @@ export interface PaymentMethod {
 export interface Customer {
   id?: string
   email: string
-  firstName?: string
-  lastName?: string
+  firstName: string
+  lastName: string
+  phone: string
   isGuest: boolean
 }
 
 export interface CheckoutState {
-  step: CheckoutStep
-  customer: Customer | null
-  shippingAddress: Address | null
-  billingAddress: Address | null
-  shippingMethod: ShippingMethod | null
-  paymentMethod: PaymentMethod | null
-  discountCode: string | null
-  cartItems: CartItem[]
-  orderNotes: string
+    step: string
+    customer: Customer | null
+    shippingAddress: Address | null
+    billingAddress: Address | null
+    shippingMethod: ShippingMethod | null
+    paymentMethod: PaymentMethod | null
+    discountCode: string | null
+    cartItems: CartItem[]
+    orderNotes: string
+    isGuest: boolean
+    paymentIntent: string | null
+    clientSecret: string | null
+    shippingOptions: ShippingOption[]
+    taxAmount: number
+    shippingAmount: number
+    subtotal: number
+    total: number
+    isLoading?: boolean
+    error?: string | null
+    orderId?: string
+    order?: any
+}
+
+export interface ShippingOption {
+  id: string
+  name: string
+  description: string
+  price: number
+  estimatedDelivery: string
 }
 
 export type CheckoutAction =
@@ -63,3 +84,14 @@ export type CheckoutAction =
   | { type: 'SET_DISCOUNT_CODE'; payload: string | null }
   | { type: 'SET_CART_ITEMS'; payload: CartItem[] }
   | { type: 'SET_ORDER_NOTES'; payload: string }
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SET_ERROR'; payload: string | null }
+  | { type: 'SET_ORDER_ID'; payload: string }
+  | { type: 'SET_PAYMENT_INTENT'; payload: string | null }
+  | { type: 'SET_SHIPPING_OPTIONS'; payload: ShippingOption[] }
+  | { type: 'SET_TAX_AMOUNT'; payload: number }
+  | { type: 'SET_SHIPPING_AMOUNT'; payload: number }
+  | { type: 'SET_SUBTOTAL'; payload: number }
+  | { type: 'SET_TOTAL'; payload: number }
+  | { type: 'SET_ORDER'; payload: any }
+  | { type: 'CLEAR_CART'; payload?: never }

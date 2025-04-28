@@ -15,6 +15,8 @@ interface ICustomer extends Document {
   };
   taxId?: string;
   notes?: string;
+  customerType: 'individual' | 'business' | 'government' | 'guest';
+  status: 'active' | 'inactive' | 'pending';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -69,7 +71,7 @@ const CustomerSchema = new Schema({
   },
   customerType: { 
     type: String, 
-    enum: ['individual', 'business', 'government'],
+    enum: ['individual', 'business', 'government', 'guest'],
     default: 'business'
   },
   status: {

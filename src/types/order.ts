@@ -1,4 +1,77 @@
+export interface OrderItemSize {
+  size: string;
+  quantity: number;
+}
+
 export interface OrderItem {
+  productId: string;
+  name: string;
+  price: number;
+  image: string;
+  color?: string;
+  sizes: OrderItemSize[];
+  totalQuantity: number;
+}
+
+export interface PaymentDetails {
+  method: 'credit_card' | 'paypal' | 'bank_transfer';
+  transactionId?: string;
+  status: 'pending' | 'completed' | 'failed' | 'refunded';
+  amount: number;
+}
+
+export interface ShippingDetails {
+  method: 'standard' | 'express' | 'priority';
+  trackingNumber?: string;
+  cost: number;
+  estimatedDelivery?: Date;
+}
+
+export interface DesignDetails {
+  notes?: string;
+  options?: Record<string, any>;
+}
+
+export interface Address {
+  street?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+}
+
+export interface OrderCreatePayload {
+  items: Array<{
+    productId: string;
+    quantity: number;
+    price: number;
+  }>;
+  paymentIntentId: string;
+  amount: number;
+}
+
+export interface Order {
+  _id: string;
+  customerId: string;
+  items: OrderItem[];
+  subtotal: number;
+  tax: number;
+  shippingCost: number;
+  total: number;
+  status: 'pending' | 'processing' | 'completed' | 'shipped' | 'cancelled';
+  paymentMethod: string;
+  design?: DesignDetails;
+  payment?: PaymentDetails;
+  shipping?: ShippingDetails;
+  shippingAddress?: Address;
+  billingAddress?: Address;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Legacy types for backward compatibility
+export interface LegacyOrderItem {
   product: string | { id: string; name: string; basePrice: number };
   size: string;
   quantity: number;
@@ -8,53 +81,15 @@ export interface OrderItem {
   printType?: string;
 }
 
-export interface ShippingDetails {
-  address?: {
-    street?: string;
-    city?: string;
-    state?: string;
-    postalCode?: string;
-    country?: string;
+export interface LegacyOrder extends Omit<Order, 'items' | 'paymentMethod' | 'payment'> {
+  items: LegacyOrderItem[];
+  payment: {
+    status: 'Pending' | 'Paid' | 'Refunded';
+    method: 'credit_card' | 'paypal' | 'bank_transfer' | string;
+    amount: number;
+    tax: number;
+    shipping?: number;
+    total: number;
+    discount?: number;
   };
-  method?: "Standard" | "Express" | "Priority" | "Pickup";
-  cost?: number;
-  trackingNumber?: string;
-  estimatedDelivery?: string;
-}
-
-export interface OrderDesign {
-  description: string;
-  mockupUrl?: string;
-  colors: string[];
-  placement: string;
-}
-
-export interface OrderPayment {
-  status: "Pending" | "Paid" | "Refunded";
-  method: string;
-  amount: number;
-  tax: number;
-  shipping?: number;
-  total: number;
-  discount?: number;
-}
-
-export interface Order {
-  id: string;
-  customer: {
-    id: string;
-    name: string;
-    email: string;
-    phone: string;
-    company?: string;
-  };
-  design: OrderDesign;
-  shipping?: ShippingDetails;
-  items: OrderItem[];
-  status: "Pending" | "Processing" | "Completed" | "Shipped" | "Cancelled";
-  dueDate: string;
-  payment: OrderPayment;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
 }
