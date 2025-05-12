@@ -32,6 +32,7 @@ import {
 import Link from "next/link";
 import { Product } from "@/types/product";
 import { getProducts } from "@/lib/api/products";
+import { ProductDetailModal } from "@/modals/ProductDetailModal";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -39,6 +40,7 @@ export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     fetchProducts();
@@ -174,10 +176,18 @@ export default function ProductsPage() {
                   key={product.id}
                   className="cursor-pointer hover:bg-muted/50"
                 >
-                  <TableCell>
+                  <TableCell className="w-1/2">
                     <div className="font-medium">{product.name}</div>
-                    <div className="text-xs text-muted-foreground line-clamp-1">
-                      {product.description}
+                    <div className="text-xs text-muted-foreground break-words whitespace-normal">
+                      <p className={"line-clamp-1"}>{product.description}</p>
+                      {product.description.length > 60 && (
+                        <button
+                          onClick={() => setSelectedProduct(product)}
+                          className="text-blue-600 font-medium hover:underline mt-1 cursor-pointer"
+                        >
+                          {"read more"}
+                        </button>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>${product.basePrice.toFixed(2)}</TableCell>
@@ -206,7 +216,10 @@ export default function ProductsPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/products/${product.id}`}>
+                          <Link
+                            onClick={() => setSelectedProduct(product)}
+                            href={``}
+                          >
                             View details
                           </Link>
                         </DropdownMenuItem>
@@ -266,6 +279,11 @@ export default function ProductsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ProductDetailModal
+        product={selectedProduct}
+        onOpenChange={() => setSelectedProduct(null)}
+      />
     </div>
   );
 }
