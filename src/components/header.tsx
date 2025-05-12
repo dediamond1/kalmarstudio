@@ -7,6 +7,8 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useCartStore, type CartState } from "@/store/cart";
 import CartCount from "@/components/CartCount";
+import Container from "./ui/Container";
+import { HiOutlineMenu } from "react-icons/hi";
 
 const navLinks = [
   { name: "Products", href: "/products" },
@@ -18,34 +20,33 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between px-4">
-        <div className="flex items-center space-x-6">
-          <Link href="/" className="flex items-center space-x-2">
-            <span className="font-bold">Kalmar Studio</span>
-          </Link>
+    <Container>
+      <div className="flex items-center justify-between py-4">
+        <div className="flex items-center">
+          <a href="/" className="flex items-center space-x-2">
+            <span className="font-extrabold text-2xl">Kalmar Studio</span>
+          </a>
+        </div>
 
-          <Link href="/cart">
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center space-x-8">
+          {navLinks.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className="text-lg font-semibold text-[#00000099] hover:text-primary"
+            >
+              {link.name}
+            </a>
+          ))}
+          <a href="/cart">
             <Button variant="ghost" size="icon" className="relative" asChild>
               <div>
                 <ShoppingCart className="h-5 w-5" />
                 <CartCount />
               </div>
             </Button>
-          </Link>
-        </div>
-
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-6">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              {link.name}
-            </Link>
-          ))}
+          </a>
         </nav>
 
         {/* Mobile Menu Button */}
@@ -55,7 +56,7 @@ export default function Header() {
           className="md:hidden"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         >
-          {mobileMenuOpen ? <X /> : <Menu />}
+          {mobileMenuOpen ? <X /> : <HiOutlineMenu size={48} />}
         </Button>
 
         {/* Mobile Navigation */}
@@ -75,14 +76,14 @@ export default function Header() {
               <div className="container px-4 py-6">
                 <nav className="flex flex-col space-y-4">
                   {navLinks.map((link) => (
-                    <Link
+                    <a
                       key={link.href}
                       href={link.href}
                       className="text-lg font-medium py-2 hover:text-primary transition-colors"
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       {link.name}
-                    </Link>
+                    </a>
                   ))}
                 </nav>
               </div>
@@ -90,6 +91,6 @@ export default function Header() {
           </div>
         )}
       </div>
-    </header>
+    </Container>
   );
 }

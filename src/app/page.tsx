@@ -1,8 +1,27 @@
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { unsplashImages } from "@/lib/unsplash";
+import Container from "@/components/ui/Container";
 
 export default function Home() {
+  const featuresJson = [
+    {
+      title: "Quality Materials",
+      description: "Only the finest fabrics and printing techniques",
+      icon: "✨",
+    },
+    {
+      title: "Fast Turnaround",
+      description: "Quick production without compromising quality",
+      icon: "⚡",
+    },
+    {
+      title: "Eco-Friendly",
+      description: "Sustainable materials and processes",
+      icon: "🌱",
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
@@ -12,7 +31,7 @@ export default function Home() {
           src={unsplashImages.hero.url}
           alt="Custom Apparel Printing"
           fill
-          className="object-cover"
+          className="object-cover opacity-50"
           priority
         />
         <div className="relative z-20 text-center px-4 max-w-4xl mx-auto">
@@ -22,63 +41,49 @@ export default function Home() {
           <p className="text-lg md:text-xl text-gray-700 mb-8 max-w-2xl mx-auto">
             High-quality printing on premium garments with fast turnaround
           </p>
-          <Button size="lg" className="px-8 py-6 text-lg">
+          <Button size="lg" className="px-8 py-6 text-lg cursor-pointer">
             Get Started
           </Button>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-4 max-w-7xl mx-auto">
+      <Container className="!my-20">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[
-            {
-              title: "Quality Materials",
-              description: "Only the finest fabrics and printing techniques",
-              icon: "✨",
-            },
-            {
-              title: "Fast Turnaround",
-              description: "Quick production without compromising quality",
-              icon: "⚡",
-            },
-            {
-              title: "Eco-Friendly",
-              description: "Sustainable materials and processes",
-              icon: "🌱",
-            },
-          ].map((feature, index) => (
+          {featuresJson.map((feature, index) => (
             <div
               key={index}
-              className="text-center p-8 rounded-lg bg-white shadow-sm"
+              className="text-center p-8 rounded-lg bg-[#fbfbfb] shadow-md shadow-[rgba(0,0,0,0.15)] transition-transform duration-300 ease-in-out hover:scale-105 hover:shadow-xl hover:shadow-[rgba(0,0,0,0.25)]"
             >
-              <div className="text-3xl mb-4">{feature.icon}</div>
+              <div className="text-3xl mb-4 transition-transform duration-300 hover:rotate-6">
+                {feature.icon}
+              </div>
               <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-              <p className="text-gray-600">{feature.description}</p>
+              <p className="text-[var(--secondary-color)]">
+                {feature.description}
+              </p>
             </div>
           ))}
         </div>
-      </section>
 
-      {/* Gallery Section */}
-      <section className="py-20 px-4 max-w-7xl mx-auto bg-gray-50">
-        <h2 className="text-3xl font-bold text-center mb-12">Our Work</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Gallery Section */}
+        <h2 className="text-3xl font-bold text-center mb-12 mt-20">Our Work</h2>
+        <div className="flex flex-wrap justify-center gap-6 mt-6 xl:mt-12 h-full w-full relative">
           {unsplashImages.gallery.slice(0, 6).map((image, index) => (
-            <div
+            <a
               key={index}
-              className="relative aspect-square rounded-lg overflow-hidden"
+              className="cursor-pointer md:w-[30%] relative aspect-square rounded-lg overflow-hidden group transition-transform duration-300 ease-in-out"
             >
               <Image
                 src={image.url}
                 alt={`Gallery Image ${index + 1}`}
                 fill
-                className="object-cover"
+                className="object-cover transform transition-transform duration-500 group-hover:scale-110"
               />
-            </div>
+            </a>
           ))}
         </div>
-      </section>
+      </Container>
 
       {/* CTA Section */}
       <section className="py-20 px-4 bg-gray-900 text-white">

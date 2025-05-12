@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Category } from "@/types/category";
+import MultiSelect from "@/components/ui/MultiSelect";
 
 export default function NewProductPage() {
   const [formData, setFormData] = useState({
@@ -138,15 +138,6 @@ export default function NewProductPage() {
     setFormData((prev) => ({ ...prev, category: value }));
   };
 
-  const handleArrayChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    field: string
-  ) => {
-    const { value } = e.target;
-    const items = value.split(",").map((item) => item.trim());
-    setFormData((prev) => ({ ...prev, [field]: items }));
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-12">
@@ -158,276 +149,235 @@ export default function NewProductPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto pb-10">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <Button variant="ghost" size="sm" asChild className="-ml-2 mb-1">
-            <Link href="/dashboard/products" className="flex items-center">
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Products
-            </Link>
-          </Button>
-          <h2 className="text-2xl font-bold tracking-tight">
-            Create New Product
-          </h2>
-          <p className="text-muted-foreground">
-            Add a new product to your catalog
-          </p>
-        </div>
+    <div className="pb-10">
+      <div>
+        <Button variant="ghost" size="sm" asChild className="-ml-2 mb-1">
+          <Link href="/dashboard/products" className="flex items-center">
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back to Products
+          </Link>
+        </Button>
+        <h2 className="text-2xl font-bold tracking-tight">
+          Create New Product
+        </h2>
+        <p className="text-muted-foreground">
+          Add a new product to your catalog
+        </p>
       </div>
 
-      <Card>
-        <CardContent className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Product Name */}
-              <div className="space-y-2">
-                <label htmlFor="name" className="block text-sm font-medium">
-                  Product Name *
-                </label>
-                <Input
-                  id="name"
-                  name="name"
-                  placeholder="Enter product name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                />
-                {errors.name && (
-                  <p className="text-sm font-medium text-destructive">
-                    {errors.name}
-                  </p>
-                )}
-              </div>
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6">
+          {/* Product Name */}
+          <div className="space-y-2">
+            <label htmlFor="name" className="block text-sm font-medium">
+              Product Name *
+            </label>
+            <Input
+              id="name"
+              name="name"
+              placeholder="Enter product name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+            />
+            {errors.name && (
+              <p className="text-sm font-medium text-destructive">
+                {errors.name}
+              </p>
+            )}
+          </div>
 
-              {/* Base Price */}
-              <div className="space-y-2">
-                <label
-                  htmlFor="basePrice"
-                  className="block text-sm font-medium"
-                >
-                  Base Price *
-                </label>
-                <Input
-                  id="basePrice"
-                  name="basePrice"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={formData.basePrice}
-                  onChange={(e) => handleNumberChange(e, "basePrice")}
-                  required
-                />
-                {errors.basePrice && (
-                  <p className="text-sm font-medium text-destructive">
-                    {errors.basePrice}
-                  </p>
-                )}
-              </div>
-            </div>
+          {/* Base Price */}
+          <div className="space-y-2">
+            <label htmlFor="basePrice" className="block text-sm font-medium">
+              Base Price *
+            </label>
+            <Input
+              id="basePrice"
+              name="basePrice"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              value={formData.basePrice}
+              onChange={(e) => handleNumberChange(e, "basePrice")}
+              required
+            />
+            {errors.basePrice && (
+              <p className="text-sm font-medium text-destructive">
+                {errors.basePrice}
+              </p>
+            )}
+          </div>
+          {/* </div> */}
 
-            {/* Description */}
-            <div className="space-y-2">
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium"
-              >
-                Description *
-              </label>
-              <Textarea
-                id="description"
-                name="description"
-                placeholder="Enter product description"
-                className="resize-none h-24"
-                value={formData.description}
-                onChange={handleChange}
-                required
-              />
-              {errors.description && (
-                <p className="text-sm font-medium text-destructive">
-                  {errors.description}
-                </p>
-              )}
-            </div>
+          {/* Category */}
+          <div className="w-full space-y-2 gap-[1px] flex flex-col">
+            <label htmlFor="category" className="text-sm font-medium">
+              Category *
+            </label>
 
-            {/* Category */}
-            <div className="space-y-2">
-              <label htmlFor="category" className="block text-sm font-medium">
-                Category *
-              </label>
-              <Select
-                onValueChange={handleSelectChange}
-                value={formData.category}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.category && (
-                <p className="text-sm font-medium text-destructive">
-                  {errors.category}
-                </p>
-              )}
-            </div>
+            <Select
+              onValueChange={handleSelectChange}
+              value={formData.category}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.category && (
+              <p className="text-sm font-medium text-destructive">
+                {errors.category}
+              </p>
+            )}
+          </div>
 
-            {/* Product Attributes */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Print Types */}
-              <div className="space-y-2">
-                <label
-                  htmlFor="printTypes"
-                  className="block text-sm font-medium"
-                >
-                  Print Types
-                </label>
-                <Input
-                  id="printTypes"
-                  name="printTypes"
-                  placeholder="Comma separated values"
-                  value={formData.printTypes.join(", ")}
-                  onChange={(e) => handleArrayChange(e, "printTypes")}
-                />
-                <p className="text-sm text-muted-foreground">
-                  Example: Digital, Screen, Offset
-                </p>
-              </div>
+          {/* </div> */}
 
-              {/* Available Sizes */}
-              <div className="space-y-2">
-                <label
-                  htmlFor="availableSizes"
-                  className="block text-sm font-medium"
-                >
-                  Available Sizes
-                </label>
-                <Input
-                  id="availableSizes"
-                  name="availableSizes"
-                  placeholder="Comma separated values"
-                  value={formData.availableSizes.join(", ")}
-                  onChange={(e) => handleArrayChange(e, "availableSizes")}
-                />
-                <p className="text-sm text-muted-foreground">
-                  Example: S, M, L, XL
-                </p>
-              </div>
-            </div>
+          {/* Product Attributes */}
+          {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6"> */}
+          {/* Print Types */}
+          <MultiSelect
+            label="Print Types"
+            options={["Digital", "Screen", "Offset"]}
+            value={formData.printTypes}
+            onChange={(selected) =>
+              setFormData((prev) => ({ ...prev, printTypes: selected }))
+            }
+            placeholder="Choose print types"
+          />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Colors */}
-              <div className="space-y-2">
-                <label htmlFor="colors" className="block text-sm font-medium">
-                  Colors
-                </label>
-                <Input
-                  id="colors"
-                  name="colors"
-                  placeholder="Comma separated values"
-                  value={formData.colors.join(", ")}
-                  onChange={(e) => handleArrayChange(e, "colors")}
-                />
-                <p className="text-sm text-muted-foreground">
-                  Example: Red, Blue, Green
-                </p>
-              </div>
+          {/* Available Sizes */}
+          <MultiSelect
+            label="Available Sizes"
+            options={["S", "M", "L", "XL", "XXL", "3XL"]}
+            value={formData.availableSizes}
+            onChange={(selected) =>
+              setFormData((prev) => ({ ...prev, availableSizes: selected }))
+            }
+            placeholder="Choose print types"
+          />
 
-              {/* Materials */}
-              <div className="space-y-2">
-                <label
-                  htmlFor="materials"
-                  className="block text-sm font-medium"
-                >
-                  Materials
-                </label>
-                <Input
-                  id="materials"
-                  name="materials"
-                  placeholder="Comma separated values"
-                  value={formData.materials.join(", ")}
-                  onChange={(e) => handleArrayChange(e, "materials")}
-                />
-                <p className="text-sm text-muted-foreground">
-                  Example: Cotton, Polyester, Silk
-                </p>
-              </div>
-            </div>
+          {/* Colors */}
+          <MultiSelect
+            label="Colors"
+            options={["Red", "Blue", "Green", "Black", "White"]}
+            value={formData.colors}
+            onChange={(selected) =>
+              setFormData((prev) => ({ ...prev, colors: selected }))
+            }
+            placeholder="Choose print types"
+          />
 
-            {/* Minimum Order Quantity */}
-            <div className="space-y-2">
-              <label
-                htmlFor="minOrderQuantity"
-                className="block text-sm font-medium"
-              >
-                Minimum Order Quantity
-              </label>
-              <Input
-                id="minOrderQuantity"
-                name="minOrderQuantity"
-                type="number"
-                min="1"
-                value={formData.minOrderQuantity}
-                onChange={(e) => handleNumberChange(e, "minOrderQuantity")}
-              />
-            </div>
+          {/* Materials */}
+          <MultiSelect
+            label="Materials"
+            options={["Cotton", "Polyester", "Silk", "Wool"]}
+            value={formData.materials}
+            onChange={(selected) =>
+              setFormData((prev) => ({ ...prev, materials: selected }))
+            }
+            placeholder="Choose print types"
+          />
 
-            {/* Image URLs */}
-            <div className="space-y-2">
-              <label htmlFor="imageUrls" className="block text-sm font-medium">
-                Image URLs
-              </label>
-              <Textarea
-                id="imageUrls"
-                name="imageUrls"
-                placeholder="Enter image URLs, one per line"
-                className="resize-none h-24"
-                value={formData.imageUrls.join("\n")}
-                onChange={(e) => {
-                  const urls = e.target.value
-                    .split("\n")
-                    .filter((url) => url.trim());
-                  setFormData((prev) => ({ ...prev, imageUrls: urls }));
-                }}
-              />
-            </div>
+          {/* Minimum Order Quantity */}
+          <div className="space-y-2">
+            <label
+              htmlFor="minOrderQuantity"
+              className="block text-sm font-medium"
+            >
+              Minimum Order Quantity
+            </label>
+            <Input
+              id="minOrderQuantity"
+              name="minOrderQuantity"
+              type="number"
+              min="1"
+              value={formData.minOrderQuantity}
+              onChange={(e) => handleNumberChange(e, "minOrderQuantity")}
+            />
+          </div>
+          {/* </div> */}
+        </div>
 
-            {/* Active Status */}
-            <div className="flex items-center justify-between rounded-lg border p-4 shadow-sm">
-              <div className="space-y-0.5">
-                <label className="text-base font-medium">Product Active</label>
-                <p className="text-sm text-muted-foreground">
-                  Inactive products won't show in the catalog
-                </p>
-              </div>
-              <Switch
-                checked={formData.isActive}
-                onCheckedChange={handleSwitchChange}
-              />
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          {/* Description */}
+          <div className="space-y-2">
+            <label htmlFor="description" className="block text-sm font-medium">
+              Description *
+            </label>
+            <Textarea
+              id="description"
+              name="description"
+              placeholder="Enter product description"
+              className="resize-none h-24"
+              value={formData.description}
+              onChange={handleChange}
+              required
+            />
+            {errors.description && (
+              <p className="text-sm font-medium text-destructive">
+                {errors.description}
+              </p>
+            )}
+          </div>
 
-            {/* Form Actions */}
-            <div className="flex justify-end gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push("/dashboard/products")}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create Product"}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+          {/* Image URLs */}
+          <div className="space-y-2">
+            <label htmlFor="imageUrls" className="block text-sm font-medium">
+              Image URLs
+            </label>
+            <Textarea
+              id="imageUrls"
+              name="imageUrls"
+              placeholder="Enter image URLs, one per line"
+              className="resize-none h-24"
+              value={formData.imageUrls.join("\n")}
+              onChange={(e) => {
+                const urls = e.target.value
+                  .split("\n")
+                  .filter((url) => url.trim());
+                setFormData((prev) => ({ ...prev, imageUrls: urls }));
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Active Status */}
+        <div className="flex items-center justify-between rounded-lg border p-4 shadow-sm my-6">
+          <div className="space-y-0.5">
+            <label className="text-base font-medium">Product Active</label>
+            <p className="text-sm text-muted-foreground">
+              {`Inactive products won\'t show in the catalog`}
+            </p>
+          </div>
+          <Switch
+            checked={formData.isActive}
+            onCheckedChange={handleSwitchChange}
+          />
+        </div>
+
+        {/* Form Actions */}
+        <div className="flex justify-end gap-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push("/dashboard/products")}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Creating..." : "Create Product"}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }

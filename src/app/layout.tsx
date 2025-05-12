@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toast";
 import Header from "@/components/header";
 
 import "./globals.css";
+import "../values/css-variables.scss";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
