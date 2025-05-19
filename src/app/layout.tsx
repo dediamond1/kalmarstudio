@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { Toaster } from "@/components/ui/toast";
-import Header from "@/components/header";
-
+"use client";
 import "./globals.css";
 import "../values/css-variables.scss";
+import { Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from "sonner";
+import Header from "@/components/header";
+import { usePathname } from "next/navigation";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,24 +16,37 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Kalmar Studio",
-  description: "Premium custom apparel printing",
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const isDashboard = pathname?.startsWith("/dashboard") ?? false;
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Header />
+        {!isDashboard && <Header />}
         {children}
-        <Toaster />
+        <Toaster
+          position="top-center"
+          richColors
+          closeButton
+          toastOptions={{
+            style: {
+              border: "none",
+              borderRadius: "8px",
+            },
+            classNames: {
+              toast: "!p-4",
+              error: "!bg-red-600 !text-white",
+              success: "!bg-green-600 !text-white",
+            },
+          }}
+        />
       </body>
     </html>
   );

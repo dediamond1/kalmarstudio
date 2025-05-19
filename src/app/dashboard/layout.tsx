@@ -1,6 +1,7 @@
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { DashboardHeader } from "@/components/dashboard/header";
 import { authClient } from "@/lib/auth-client";
+import Orders from "@/components/dashboard/Orders";
 
 export default async function DashboardLayout({
   children,
@@ -14,13 +15,13 @@ export default async function DashboardLayout({
   // }
 
   return (
-    <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-      <Sidebar />
-      <div className="flex flex-col">
+    <div className="">
+      <div className="fixed inset-0 w-[320px] bg-muted/40 border-r">
+        <Sidebar />
+      </div>
+      <div className="flex flex-col flex-1 w-[100vw - 320px] h-screen ml-[320px]">
         <DashboardHeader />
-        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-          {children}
-        </main>
+        <div className="flex flex-1 flex-col mt-16">{children}</div>
       </div>
     </div>
   );

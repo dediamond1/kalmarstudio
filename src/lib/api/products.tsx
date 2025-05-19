@@ -100,9 +100,9 @@ export async function getActiveProducts({
     const response = await fetch(url.toString());
 
     if (!response.ok) {
-      throw new Error(
-        `Failed to fetch products: ${response.status} ${response.statusText}`
-      );
+      // throw new Error(
+      //   `Failed to fetch products: ${response.status} ${response.statusText}`
+      // );
     }
 
     const data = await response.json();

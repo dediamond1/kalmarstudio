@@ -1,24 +1,31 @@
+import Orders from "@/components/dashboard/Orders";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap justify-center gap-6 mt-6 xl:mt-12 h-full w-full relative">
-        {/* Total user */}
-        <CardItem title="Total Users" value={0} />
+    <div>
+      <div className="mt-6 xl:mt-12">
+        <div className="flex flex-wrap justify-center gap-6 h-full w-full relative">
+          {/* Sales */}
+          <CardItem title="Sales" value={0} />
 
-        {/* Active Sessions */}
-        <CardItem title="Active Sessions" value={0} />
+          {/* Total user */}
+          <CardItem title="Total Users" value={0} />
 
-        {/* Premium Users */}
-        <CardItem title="Premium Users" value={0} />
+          {/* Active Sessions */}
+          <CardItem title="Active Sessions" value={0} />
 
-        {/* Banned Users */}
-        <CardItem title="Banned Users" value={0} />
+          {/* Premium Users */}
+          <CardItem title="Premium Users" value={0} />
 
-        {/* Orders */}
-        <CardItem title="Orders" value={0} />
+          {/* Banned Users */}
+          <CardItem title="Banned Users" value={0} />
+
+          {/* Orders */}
+          {/* <CardItem title="Orders" value={0} /> */}
+        </div>
       </div>
+      <Orders />
     </div>
   );
 }
@@ -30,13 +37,34 @@ const CardItem = ({
   title: string;
   value: string | number;
 }) => {
+  const getCardStyle = () => {
+    switch (title) {
+      case "Sales":
+        return "bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200";
+      case "Total Users":
+        return "bg-gradient-to-br from-green-50 to-green-100 border-green-200";
+      case "Active Sessions":
+        return "bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200";
+      case "Premium Users":
+        return "bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200";
+      case "Banned Users":
+        return "bg-gradient-to-br from-red-50 to-red-100 border-red-200";
+      default:
+        return "bg-white";
+    }
+  };
+
   return (
-    <Card className="w-[18%] flex flex-col justify-between">
+    <Card
+      className={`w-[18%] flex flex-col justify-between border ${getCardStyle()}`}
+    >
       <CardHeader>
-        <CardTitle className="text-md font-medium">{title}</CardTitle>
+        <CardTitle className="text-md font-medium text-gray-700">
+          {title}
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-4xl font-bold">{value}</div>
+        <div className="text-4xl font-bold text-gray-800">{value}</div>
       </CardContent>
     </Card>
   );

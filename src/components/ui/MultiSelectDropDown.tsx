@@ -1,8 +1,8 @@
 import * as Popover from "@radix-ui/react-popover";
 import * as Checkbox from "@radix-ui/react-checkbox";
-import { Check } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 
-type MultiSelectProps = {
+type MultiSelectDropDownProps = {
   label?: string;
   options: string[];
   value: string[];
@@ -10,13 +10,13 @@ type MultiSelectProps = {
   placeholder?: string;
 };
 
-export default function MultiSelect({
+export default function MultiSelectDropDown({
   label = "Select Items",
   options,
   value,
   onChange,
   placeholder = "Select...",
-}: MultiSelectProps) {
+}: MultiSelectDropDownProps) {
   const toggleOption = (option: string) => {
     if (value.includes(option)) {
       onChange(value.filter((v) => v !== option));
@@ -33,9 +33,10 @@ export default function MultiSelect({
         <Popover.Trigger asChild>
           <button
             type="button"
-            className="w-full text-left border px-3 py-2 rounded-md text-sm bg-white"
+            className="w-full flex justify-between items-center border px-3 py-2 rounded-md text-sm bg-white"
           >
-            {value.length > 0 ? value.join(", ") : placeholder}
+            <span>{value.length > 0 ? value.join(", ") : placeholder}</span>
+            <ChevronDown className="ml-2 h-4 w-4 text-muted-foreground" />
           </button>
         </Popover.Trigger>
 

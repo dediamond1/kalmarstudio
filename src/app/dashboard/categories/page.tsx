@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/dialog";
 import Link from "next/link";
 import { Category } from "@/types/category";
+import Container from "@/components/ui/Container";
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -184,11 +185,22 @@ export default function CategoriesPage() {
               {isSubcategory && <div className="w-4"></div>}
               <div className="font-medium">{category.name}</div>
             </div>
-            <div className="text-xs text-muted-foreground ml-6">
+            {/* <div className="text-xs text-muted-foreground">
               {isSubcategory ? "" : category.description}
+            </div> */}
+            <div className="text-xs text-muted-foreground break-words whitespace-normal">
+              <p className={"line-clamp-1"}>{category?.description}</p>
+              {/* {category.description.length > 60 && (
+                <button
+                  onClick={() => {}}
+                  className="text-blue-600 font-medium hover:underline mt-1 cursor-pointer"
+                >
+                  {"read more"}
+                </button>
+              )} */}
             </div>
           </TableCell>
-          <TableCell className="text-center">
+          <TableCell>
             <Badge
               className="text-xs"
               variant={isSubcategory ? "outline" : "default"}
@@ -201,7 +213,7 @@ export default function CategoriesPage() {
               {category.isActive ? "Active" : "Inactive"}
             </Badge>
           </TableCell>
-          <TableCell className="text-center">{category.sortOrder}</TableCell>
+          <TableCell>{category.sortOrder}</TableCell>
           <TableCell>
             <DropdownMenu>
               <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -273,7 +285,7 @@ export default function CategoriesPage() {
   });
 
   return (
-    <div className="space-y-4">
+    <Container className="space-y-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold">Categories</h1>
@@ -383,6 +395,6 @@ export default function CategoriesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </Container>
   );
 }

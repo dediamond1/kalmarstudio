@@ -14,6 +14,7 @@ import { OrdersFilters } from "@/components/dashboard/orders/orders-filters";
 import { OrdersTable } from "@/components/dashboard/orders/orders-table";
 import { getOrders } from "@/lib/api/orders";
 import { Order } from "@/types/order";
+import Orders from "@/components/dashboard/Orders";
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -55,8 +56,9 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-6">
+      <Orders />
       {/* Header */}
-      <div className="flex flex-col gap-4">
+      {/* <div className="flex flex-col gap-4">
         <div className="flex flex-col md:flex-row justify-between md:items-center">
           <div>
             <h1 className="text-3xl font-bold">Orders</h1>
@@ -76,17 +78,17 @@ export default function OrdersPage() {
         </div>
 
         <OrderStatsCards {...orderStats} />
-      </div>
+      </div> */}
 
       {/* Filters & Search */}
-      <OrdersFilters
+      {/* <OrdersFilters
         orders={orders}
         setFilteredOrders={setFilteredOrders}
         onRefresh={fetchOrders}
-      />
+      /> */}
 
       {/* Orders Table */}
-      <OrdersTable
+      {/* <OrdersTable
         orders={filteredOrders}
         loading={loading}
         onOrderDelete={(deletedId) => {
@@ -95,7 +97,7 @@ export default function OrdersPage() {
             filteredOrders.filter((order) => order.id !== deletedId)
           );
         }}
-      />
+      /> */}
     </div>
   );
 }

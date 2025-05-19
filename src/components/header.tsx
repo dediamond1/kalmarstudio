@@ -1,11 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Menu, X, ShoppingCart } from "lucide-react";
+import { X, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { useCartStore, type CartState } from "@/store/cart";
 import CartCount from "@/components/CartCount";
 import Container from "./ui/Container";
 import { HiOutlineMenu } from "react-icons/hi";

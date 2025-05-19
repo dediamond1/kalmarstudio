@@ -17,7 +17,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Category } from "@/types/category";
-import MultiSelect from "@/components/ui/MultiSelect";
+import MultiSelectDropDown from "@/components/ui/MultiSelectDropDown";
+import { ShirtDesigner } from "@/components/products/ShirtDesigner";
+import Container from "@/components/ui/Container";
 
 export default function NewProductPage() {
   const [formData, setFormData] = useState({
@@ -32,6 +34,11 @@ export default function NewProductPage() {
     minOrderQuantity: 1,
     imageUrls: [] as string[],
     isActive: true,
+    design: {
+      imageUrl: "",
+      tintColor: "red",
+      position: { x: 0, y: 0, scale: 1 },
+    },
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -149,7 +156,7 @@ export default function NewProductPage() {
   }
 
   return (
-    <div className="pb-10">
+    <Container className="pb-10">
       <div>
         <Button variant="ghost" size="sm" asChild className="-ml-2 mb-1">
           <Link href="/dashboard/products" className="flex items-center">
@@ -244,7 +251,7 @@ export default function NewProductPage() {
           {/* Product Attributes */}
           {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6"> */}
           {/* Print Types */}
-          <MultiSelect
+          <MultiSelectDropDown
             label="Print Types"
             options={["Digital", "Screen", "Offset"]}
             value={formData.printTypes}
@@ -255,7 +262,7 @@ export default function NewProductPage() {
           />
 
           {/* Available Sizes */}
-          <MultiSelect
+          <MultiSelectDropDown
             label="Available Sizes"
             options={["S", "M", "L", "XL", "XXL", "3XL"]}
             value={formData.availableSizes}
@@ -266,7 +273,7 @@ export default function NewProductPage() {
           />
 
           {/* Colors */}
-          <MultiSelect
+          <MultiSelectDropDown
             label="Colors"
             options={["Red", "Blue", "Green", "Black", "White"]}
             value={formData.colors}
@@ -277,7 +284,7 @@ export default function NewProductPage() {
           />
 
           {/* Materials */}
-          <MultiSelect
+          <MultiSelectDropDown
             label="Materials"
             options={["Cotton", "Polyester", "Silk", "Wool"]}
             value={formData.materials}
@@ -309,7 +316,7 @@ export default function NewProductPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
           {/* Description */}
-          <div className="space-y-2">
+          <div className="space-y-2 my-6">
             <label htmlFor="description" className="block text-sm font-medium">
               Description *
             </label>
@@ -328,9 +335,24 @@ export default function NewProductPage() {
               </p>
             )}
           </div>
+          {/* Active Status */}
+          <div className="flex items-center justify-between rounded-lg border p-4 shadow-sm my-6">
+            <div className="space-y-0.5">
+              <label className="text-base font-medium">Product Active</label>
+              <p className="text-sm text-muted-foreground">
+                {`Inactive products won\'t show in the catalog`}
+              </p>
+            </div>
+            <Switch
+              checked={formData.isActive}
+              onCheckedChange={handleSwitchChange}
+            />
+          </div>
+        </div>
 
-          {/* Image URLs */}
-          <div className="space-y-2">
+        {/* Image URLs */}
+
+        {/* <div className="space-y-2">
             <label htmlFor="imageUrls" className="block text-sm font-medium">
               Image URLs
             </label>
@@ -347,21 +369,11 @@ export default function NewProductPage() {
                 setFormData((prev) => ({ ...prev, imageUrls: urls }));
               }}
             />
-          </div>
-        </div>
+          </div> */}
 
-        {/* Active Status */}
-        <div className="flex items-center justify-between rounded-lg border p-4 shadow-sm my-6">
-          <div className="space-y-0.5">
-            <label className="text-base font-medium">Product Active</label>
-            <p className="text-sm text-muted-foreground">
-              {`Inactive products won\'t show in the catalog`}
-            </p>
-          </div>
-          <Switch
-            checked={formData.isActive}
-            onCheckedChange={handleSwitchChange}
-          />
+        <div className="space-y-2 my-6">
+          <label className="block text-sm font-medium">Shirt Design</label>
+          <ShirtDesigner colors={formData?.colors} />
         </div>
 
         {/* Form Actions */}
@@ -378,6 +390,6 @@ export default function NewProductPage() {
           </Button>
         </div>
       </form>
-    </div>
+    </Container>
   );
 }

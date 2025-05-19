@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Category } from "@/types/category";
+import Container from "@/components/ui/Container";
 
 export default function NewCategoryPage() {
   const [formData, setFormData] = useState({
@@ -49,9 +49,9 @@ export default function NewCategoryPage() {
         setCategories(data.data);
       } catch (error) {
         console.error("Error fetching categories:", error);
-        toast.error(
-          error instanceof Error ? error.message : "Failed to load categories"
-        );
+        const message =
+          error instanceof Error ? error.message : "Failed to load categories";
+        toast.error(message, { position: "top-center", duration: 5000 });
       } finally {
         setIsLoading(false);
       }
@@ -92,8 +92,14 @@ export default function NewCategoryPage() {
 
       toast.success("Category created successfully");
       router.push("/dashboard/categories");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to create category");
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to create category";
+      toast.error(message, {
+        position: "top-center",
+        duration: 5000,
+        className: "bg-red-500 text-white",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -125,8 +131,8 @@ export default function NewCategoryPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto pb-10">
-      <div className="flex items-center justify-between">
+    <Container className="space-y-6 pb-10">
+      <div className="flex">
         <div className="space-y-1">
           <Button variant="ghost" size="sm" asChild className="-ml-2 mb-1">
             <Link href="/dashboard/categories" className="flex items-center">
@@ -143,156 +149,146 @@ export default function NewCategoryPage() {
         </div>
       </div>
 
-      <Card>
-        <CardContent className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Category Name */}
-              <div className="space-y-2">
-                <label htmlFor="name" className="block text-sm font-medium">
-                  Category Name *
-                </label>
-                <Input
-                  id="name"
-                  name="name"
-                  placeholder="Enter category name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                />
-                {errors.name && (
-                  <p className="text-sm font-medium text-destructive">
-                    {errors.name}
-                  </p>
-                )}
-              </div>
+      {/* <Card>
+        <CardContent className="p-6"> */}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3  gap-6">
+          {/* Category Name */}
+          <div className="space-y-2">
+            <label htmlFor="name" className="block text-sm font-medium">
+              Category Name *
+            </label>
+            <Input
+              id="name"
+              name="name"
+              placeholder="Enter category name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+            />
+            {errors.name && (
+              <p className="text-sm font-medium text-destructive">
+                {errors.name}
+              </p>
+            )}
+          </div>
 
-              {/* URL Slug */}
-              <div className="space-y-2">
-                <label htmlFor="slug" className="block text-sm font-medium">
-                  URL Slug
-                </label>
-                <Input
-                  id="slug"
-                  name="slug"
-                  placeholder="Enter URL slug"
-                  value={formData.slug}
-                  onChange={handleChange}
-                />
-                <p className="text-sm text-muted-foreground">
-                  Will be auto-generated if left blank
-                </p>
-              </div>
+          {/* URL Slug */}
+          <div className="space-y-2">
+            <label htmlFor="slug" className="block text-sm font-medium">
+              URL Slug
+            </label>
+            <Input
+              id="slug"
+              name="slug"
+              placeholder="Enter URL slug"
+              value={formData.slug}
+              onChange={handleChange}
+            />
+            <p className="text-sm text-muted-foreground">
+              Will be auto-generated if left blank
+            </p>
+          </div>
+
+          {/* Parent Category */}
+          <div className="space-y-2">
+            <label htmlFor="parentId" className="block text-sm font-medium">
+              Parent Category
+            </label>
+            <Select
+              onValueChange={handleSelectChange}
+              value={formData.parentId}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="None (Top-level category)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">None (Top-level category)</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Sort Order */}
+          {/* <div className="space-y-2">
+            <label htmlFor="sortOrder" className="block text-sm font-medium">
+              Sort Order
+            </label>
+            <Input
+              id="sortOrder"
+              name="sortOrder"
+              type="number"
+              min={0}
+              value={formData.sortOrder}
+              onChange={handleChange}
+            />
+            <p className="text-sm text-muted-foreground">
+              Lower numbers appear first
+            </p>
+          </div> */}
+
+          {/* Image URL */}
+          <div className="space-y-2">
+            <label htmlFor="imageUrl" className="block text-sm font-medium">
+              Image URL
+            </label>
+            <Input
+              id="imageUrl"
+              name="imageUrl"
+              placeholder="Enter image URL (optional)"
+              value={formData.imageUrl}
+              onChange={handleChange}
+            />
+          </div>
+          {/* Description */}
+          {/* <div className="space-y-2">
+            <label htmlFor="description" className="block text-sm font-medium">
+              Description
+            </label>
+            <Textarea
+              id="description"
+              name="description"
+              placeholder="Enter category description (optional)"
+              className="resize-none h-24"
+              value={formData.description}
+              onChange={handleChange}
+            />
+          </div> */}
+          {/* Active Status */}
+          <div className="flex items-center justify-between rounded-lg border p-4 shadow-sm">
+            <div className="space-y-0.5">
+              <label className="text-base font-medium">Category Active</label>
+              <p className="text-sm text-muted-foreground">
+                {`Inactive categories won\'t show in the product catalog`}
+              </p>
             </div>
+            <Switch
+              checked={formData.isActive}
+              onCheckedChange={handleSwitchChange}
+            />
+          </div>
+        </div>
 
-            {/* Description */}
-            <div className="space-y-2">
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium"
-              >
-                Description
-              </label>
-              <Textarea
-                id="description"
-                name="description"
-                placeholder="Enter category description (optional)"
-                className="resize-none h-24"
-                value={formData.description}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Parent Category */}
-              <div className="space-y-2">
-                <label htmlFor="parentId" className="block text-sm font-medium">
-                  Parent Category
-                </label>
-                <Select
-                  onValueChange={handleSelectChange}
-                  value={formData.parentId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="None (Top-level category)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">None (Top-level category)</SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Sort Order */}
-              <div className="space-y-2">
-                <label
-                  htmlFor="sortOrder"
-                  className="block text-sm font-medium"
-                >
-                  Sort Order
-                </label>
-                <Input
-                  id="sortOrder"
-                  name="sortOrder"
-                  type="number"
-                  min={0}
-                  value={formData.sortOrder}
-                  onChange={handleChange}
-                />
-                <p className="text-sm text-muted-foreground">
-                  Lower numbers appear first
-                </p>
-              </div>
-            </div>
-
-            {/* Image URL */}
-            <div className="space-y-2">
-              <label htmlFor="imageUrl" className="block text-sm font-medium">
-                Image URL
-              </label>
-              <Input
-                id="imageUrl"
-                name="imageUrl"
-                placeholder="Enter image URL (optional)"
-                value={formData.imageUrl}
-                onChange={handleChange}
-              />
-            </div>
-
-            {/* Active Status */}
-            <div className="flex items-center justify-between rounded-lg border p-4 shadow-sm">
-              <div className="space-y-0.5">
-                <label className="text-base font-medium">Category Active</label>
-                <p className="text-sm text-muted-foreground">
-                  Inactive categories won't show in the product catalog
-                </p>
-              </div>
-              <Switch
-                checked={formData.isActive}
-                onCheckedChange={handleSwitchChange}
-              />
-            </div>
-
-            {/* Form Actions */}
-            <div className="flex justify-end gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push("/dashboard/categories")}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create Category"}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+        {/* Form Actions */}
+        <div className="flex justify-end gap-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push("/dashboard/categories")}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Creating..." : "Create Category"}
+          </Button>
+        </div>
+      </form>
+      {/* </CardContent>
+      </Card> */}
+    </Container>
   );
 }

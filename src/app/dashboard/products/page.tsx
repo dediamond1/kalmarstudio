@@ -33,6 +33,7 @@ import Link from "next/link";
 import { Product } from "@/types/product";
 import { getProducts } from "@/lib/api/products";
 import { ProductDetailModal } from "@/modals/ProductDetailModal";
+import Container from "@/components/ui/Container";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -53,9 +54,9 @@ export default function ProductsPage() {
       setProducts(productsData);
     } catch (error) {
       console.error("Error fetching products:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to fetch products"
-      );
+      // toast.error(
+      //   error instanceof Error ? error.message : "Failed to fetch products"
+      // );
     } finally {
       setLoading(false);
     }
@@ -75,17 +76,17 @@ export default function ProductsPage() {
 
       const result = await response.json();
 
-      if (!result.success) {
-        throw new Error(result.error || "Failed to delete product");
-      }
+      // if (!result.success) {
+      //   throw new Error(result.error || "Failed to delete product");
+      // }
 
       setProducts(products.filter((product) => product.id !== id));
       toast.success("Product deleted successfully");
     } catch (error: unknown) {
       console.error("Error deleting product:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to delete product"
-      );
+      // toast.error(
+      //   error instanceof Error ? error.message : "Failed to delete product"
+      // );
     }
   };
 
@@ -101,7 +102,7 @@ export default function ProductsPage() {
   });
 
   return (
-    <div className="space-y-4">
+    <Container className="space-y-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold">Products</h1>
@@ -284,6 +285,6 @@ export default function ProductsPage() {
         product={selectedProduct}
         onOpenChange={() => setSelectedProduct(null)}
       />
-    </div>
+    </Container>
   );
 }
