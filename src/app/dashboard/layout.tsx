@@ -1,17 +1,28 @@
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { DashboardHeader } from "@/components/dashboard/header";
 import { authClient } from "@/lib/auth-client";
-import Orders from "@/components/dashboard/Orders";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // const session = await authClient.getSession();
-
-  // if (!session?.data) {
-  //   return null;
+  // if (!sessionResult?.data) {
+  //   return (
+  //     <div className="flex items-center justify-center h-screen">
+  //       <div className="text-center">
+  //         <h1 className="text-2xl font-bold mb-4">Unauthorized Access</h1>
+  //         <p className="text-muted-foreground">
+  //           Please login to access the dashboard
+  //         </p>
+  //         <Button asChild className="mt-4">
+  //           <Link href="/auth/login">Go to Login</Link>
+  //         </Button>
+  //       </div>
+  //     </div>
+  //   );
   // }
 
   return (

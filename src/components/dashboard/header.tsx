@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
-import { Menu, Bell, Search } from "lucide-react";
+import { Menu, Bell, Search, LogOut } from "lucide-react";
 import { UserDropdown } from "@/components/dashboard/user-dropdown";
 import type { AuthSession } from "@/types/auth";
 
@@ -31,6 +31,18 @@ export async function DashboardHeader() {
         <Bell className="h-5 w-5" />
         <span className="sr-only">Toggle notifications</span>
       </Button>
+      <form action="/auth/logout" method="POST">
+        <Button
+          variant="ghost"
+          size="icon"
+          type="submit"
+          className="hover:bg-red-50 hover:text-red-600"
+          title="Logout"
+        >
+          <LogOut className="h-5 w-5" />
+          <span className="sr-only">Logout</span>
+        </Button>
+      </form>
       <UserDropdown user={session?.user} />
     </header>
   );

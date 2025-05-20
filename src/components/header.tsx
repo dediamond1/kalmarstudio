@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 import CartCount from "@/components/CartCount";
 import Container from "./ui/Container";
 import { HiOutlineMenu } from "react-icons/hi";
+import LogoImage from "./ui/LogoImage";
+import Link from "next/link";
 
 const navLinks = [
   { name: "Products", href: "/products" },
@@ -21,9 +23,9 @@ export default function Header() {
     <Container>
       <div className="flex items-center justify-between py-4">
         <div className="flex items-center">
-          <a href="/" className="flex items-center space-x-2">
-            <span className="font-extrabold text-2xl">Kalmar Studio</span>
-          </a>
+          <Link href="/" className="flex items-center space-x-2">
+            <LogoImage />
+          </Link>
         </div>
 
         {/* Desktop Navigation */}
@@ -37,14 +39,22 @@ export default function Header() {
               {link.name}
             </a>
           ))}
-          <a href="/cart">
-            <Button variant="ghost" size="icon" className="relative" asChild>
-              <div>
-                <ShoppingCart className="h-5 w-5" />
-                <CartCount />
-              </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" asChild>
+              <Link href="/auth/login">Login</Link>
             </Button>
-          </a>
+            <Button asChild>
+              <Link href="/auth/register">Sign Up</Link>
+            </Button>
+            <a href="/cart">
+              <Button variant="ghost" size="icon" className="relative" asChild>
+                <div>
+                  <ShoppingCart className="h-5 w-5" />
+                  <CartCount />
+                </div>
+              </Button>
+            </a>
+          </div>
         </nav>
 
         {/* Mobile Menu Button */}
@@ -83,6 +93,21 @@ export default function Header() {
                       {link.name}
                     </a>
                   ))}
+                  <Button
+                    variant="outline"
+                    className="w-full mt-4"
+                    asChild
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Link href="/auth/login">Login</Link>
+                  </Button>
+                  <Button
+                    className="w-full mt-2"
+                    asChild
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Link href="/auth/register">Sign Up</Link>
+                  </Button>
                 </nav>
               </div>
             </div>

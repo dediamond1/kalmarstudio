@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
+import { CheckoutSuccessModal } from "./CheckoutSuccessModal";
 import { useCheckout } from "../context";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -11,32 +13,19 @@ export default function CheckoutForm() {
   const { state, dispatch } = useCheckout();
   const { toast } = useToast();
 
+  const [showSuccess, setShowSuccess] = useState(false);
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-
     if (!stripe || !elements) {
       return;
     }
-
     try {
       dispatch({ type: "SET_LOADING", payload: true });
 
-      const { error, paymentIntent } = await stripe.confirmCardPayment(
-        state.clientSecret!,
-        {
-          payment_method: {
-            card: elements.getElement(CardElement)!,
-          },
-        }
-      );
-
-      if (error) {
-        throw error;
-      }
-
-      if (paymentIntent.status === "succeeded") {
-        dispatch({ type: "SET_STEP", payload: "confirmation" });
-      }
+      // Mock successful payment
+      await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate processing delay
+      setShowSuccess(true);
     } catch (error) {
       toast({
         title: "Payment Error",
@@ -49,31 +38,39 @@ export default function CheckoutForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <CardElement
-        options={{
-          style: {
-            base: {
-              fontSize: "16px",
-              color: "#424770",
-              "::placeholder": {
-                color: "#aab7c4",
+    <>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <CardElement
+          options={{
+            style: {
+              base: {
+                fontSize: "16px",
+                color: "#424770",
+                "::placeholder": {
+                  color: "#aab7c4",
+                },
+              },
+              invalid: {
+                color: "#9e2146",
               },
             },
-            invalid: {
-              color: "#9e2146",
-            },
-          },
-        }}
-      />
+          }}
+        />
 
-      <Button
-        type="submit"
-        disabled={!stripe || state.isLoading}
-        className="w-full"
-      >
-        {state.isLoading ? "Processing..." : "Pay Now"}
-      </Button>
-    </form>
+        <Button
+          type="submit"
+          disabled={!stripe || state.isLoading}
+          className="w-full"
+        >
+          {state.isLoading ? "Processing..." : "Pay Now"}
+        </Button>
+      </form>
+
+      <CheckoutSuccessModal
+        open={showSuccess}
+        onOpenChange={setShowSuccess}
+        orderId={`DEMO-${Math.floor(Math.random() * 10000)}`}
+      />
+    </>
   );
 }

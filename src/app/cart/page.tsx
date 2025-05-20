@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import type { CartItem, CartItemSize } from "@/store/cart";
 import { Trash2 } from "lucide-react";
 import { useCartStore } from "@/store/cart";
-import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import Container from "@/components/ui/Container";
+import CartItemComponent from "./CartItem";
 
 export default function CartReview() {
-  const { items, removeItem, updateSizeQuantity, removeSize } = useCartStore();
+  const { items, updateSizeQuantity, removeSize } = useCartStore();
 
   const subtotal = items.reduce<number>(
     (sum: number, item: CartItem) =>
@@ -23,7 +24,7 @@ export default function CartReview() {
   );
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <Container className="grid grid-cols-1 md:grid-cols-3 gap-8">
       <div className="md:col-span-2">
         <h2 className="text-xl font-semibold mb-4">Your Cart</h2>
         {items.length === 0 ? (
@@ -31,93 +32,13 @@ export default function CartReview() {
         ) : (
           <div className="space-y-4">
             {items.map((item: CartItem, index: number) => (
-              <div key={index} className="border-b pb-4">
-                <div className="flex gap-4">
-                  <div className="w-24 h-24 relative bg-gray-100 rounded-md">
-                    {item.image && (
-                      <Image
-                        src={item.image}
-                        alt={item.name}
-                        fill
-                        className="object-cover rounded-md"
-                      />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-medium">{item.name}</h3>
-                    {item.color && (
-                      <p className="text-sm text-muted-foreground">
-                        Color: {item.color}
-                      </p>
-                    )}
-                    {item.material && (
-                      <p className="text-sm text-muted-foreground">
-                        Material: {item.material}
-                      </p>
-                    )}
-                    {item.printType && (
-                      <p className="text-sm text-muted-foreground">
-                        Print Type: {item.printType}
-                      </p>
-                    )}
-
-                    <div className="mt-2 space-y-2">
-                      <p className="text-sm font-medium">Selected Sizes:</p>
-                      {item.sizes.map(
-                        (size: CartItemSize, sizeIndex: number) => (
-                          <div
-                            key={sizeIndex}
-                            className="flex items-center gap-4 mt-2 bg-muted/20 p-2 rounded"
-                          >
-                            <div className="space-y-1">
-                              <span>Size: {size.size}</span>
-                            </div>
-                            <div className="flex items-center gap-2 ml-auto">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  updateSizeQuantity(
-                                    item.productId,
-                                    size.size,
-                                    Math.max(1, size.quantity - 1)
-                                  )
-                                }
-                              >
-                                -
-                              </Button>
-                              <span>{size.quantity}</span>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  updateSizeQuantity(
-                                    item.productId,
-                                    size.size,
-                                    size.quantity + 1
-                                  )
-                                }
-                              >
-                                +
-                              </Button>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                removeSize(item.productId, size.size)
-                              }
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              <Trash2 size={18} />
-                            </Button>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <CartItemComponent
+                key={index}
+                index={index}
+                item={item}
+                onUpdateQuantity={updateSizeQuantity}
+                onRemoveSize={removeSize}
+              />
             ))}
           </div>
         )}
@@ -146,6 +67,6 @@ export default function CartReview() {
           Proceed to Checkout
         </Link>
       </div>
-    </div>
+    </Container>
   );
 }

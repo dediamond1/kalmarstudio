@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { navItems } from "@/config/navigation";
 import { usePathname } from "next/navigation";
+import LogoImage from "../ui/LogoImage";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -13,7 +13,8 @@ export function Sidebar() {
       <div className="flex h-full max-h-screen flex-col gap-2">
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px]">
           <Link href="/" className="flex items-center gap-2 font-semibold">
-            <span>KalmarStudio</span>
+            {/* <span>KalmarStudio</span> */}
+            <LogoImage />
           </Link>
         </div>
         <div className="flex-1">

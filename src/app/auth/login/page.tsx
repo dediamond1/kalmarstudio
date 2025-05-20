@@ -80,6 +80,7 @@ export default function LoginPage() {
                     toast.error(message);
                     return;
                   }
+                  console.log("Login successful:", data);
                   toast.success("Login successful");
                   router.push("/dashboard");
                 } catch (err) {

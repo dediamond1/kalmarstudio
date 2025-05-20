@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { images as localImages } from "@/constants/images";
 
 interface ImageGalleryProps {
   images: string[];
@@ -28,9 +29,8 @@ export function ImageGallery({ images, productName }: ImageGalleryProps) {
   };
 
   // Default image if no images provided
-  const defaultImage =
-    "https://placehold.co/600x600/e2e8f0/a1a1aa?text=No+Image";
-  const displayImages = images?.length > 0 ? images : [defaultImage];
+  const displayImages =
+    images?.length > 0 ? images : [localImages.placeholderImage];
 
   return (
     <div className="space-y-4">
@@ -47,13 +47,13 @@ export function ImageGallery({ images, productName }: ImageGalleryProps) {
           </DialogTrigger>
           <DialogContent className="max-w-3xl p-0 border-none bg-transparent">
             <div className="relative aspect-square w-full bg-background rounded-lg overflow-hidden">
-              {/* <Image
+              <Image
                 src={displayImages[currentImage]}
                 alt={`${productName} - enlarged view`}
                 fill
                 className="object-contain p-4"
                 priority
-              /> */}
+              />
             </div>
           </DialogContent>
         </Dialog>
@@ -88,7 +88,7 @@ export function ImageGallery({ images, productName }: ImageGalleryProps) {
         )}
       </div>
 
-      {displayImages.length > 1 && (
+      {/* {displayImages.length > 1 && (
         <div className="grid grid-cols-5 gap-2">
           {displayImages.map((image, index) => (
             <Card
@@ -109,7 +109,7 @@ export function ImageGallery({ images, productName }: ImageGalleryProps) {
             </Card>
           ))}
         </div>
-      )}
+      )} */}
     </div>
   );
 }

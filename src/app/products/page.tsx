@@ -34,6 +34,7 @@ import { CategoryFilter } from "@/components/products/category-filter";
 import { PriceFilter } from "@/components/products/price-filter";
 import { getActiveProducts } from "@/lib/api/products";
 import { getCategories } from "@/lib/api/categories";
+import HeroSection from "@/components/HeroSection";
 
 export default async function ProductsPage({
   searchParams,
@@ -93,16 +94,10 @@ export default async function ProductsPage({
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-primary/10 to-secondary/10 py-16">
-        <div className="container">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-center">
-            Premium Products
-          </h1>
-          <p className="text-lg text-muted-foreground mt-4 text-center max-w-2xl mx-auto">
-            Discover our curated collection of high-quality items
-          </p>
-        </div>
-      </div>
+      <HeroSection
+        title="Premium Products"
+        description="Discover our curated collection of high-quality items"
+      />
 
       <div className="container py-12">
         <div className="flex flex-col lg:flex-row gap-8 relative">

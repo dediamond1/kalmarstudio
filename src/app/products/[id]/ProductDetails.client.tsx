@@ -60,12 +60,15 @@ export function ProductDetails({ product }: ProductDetailsProps) {
             {product.category.name}
           </a>
           <span>/</span>
-          <span className="text-foreground">{product.name}</span>
+          <span className="text-foreground">{product?.name}</span>
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Product Images */}
-          <ImageGallery images={product.imageUrls} productName={product.name} />
+          <ImageGallery
+            images={product?.imageUrls}
+            productName={product?.name}
+          />
 
           {/* Product Details */}
           <div className="flex flex-col space-y-8">
