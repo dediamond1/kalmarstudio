@@ -25,21 +25,50 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generalError, setGeneralError] = useState("");
 
-  const handleAuthError = (error: any) => {
-    const msg = error?.message?.toLowerCase() || "";
+  const handleAuthError = (error: unknown) => {
+    const err = error as { message?: string };
+    const msg = err?.message?.toLowerCase() || "";
     if (msg.includes("unauthorized") || msg.includes("invalid")) {
       return "Invalid email or password.";
     }
     return "Login failed. Please try again later.";
   };
 
-  const loggedInUther = async () => {
-    const session = await authClient.getSession();
-    console.log(session);
+  const testRoleInsert = async () => {
+    try {
+      const response = await fetch("/api/test-role");
+      const data = await response.json();
+      console.log("Test role API response:", data);
+      return data;
+    } catch (err) {
+      console.error("Error testing role:", err);
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : "Unknown error",
+      };
+    }
+  };
+
+  const checkUserRole = async () => {
+    try {
+      const { data: session, error } = await authClient.getSession();
+      if (error) {
+        console.error("Session error:", error);
+        return;
+      }
+      console.log("User session:", session);
+      if (session?.user) {
+        const userWithRole = session.user as { role?: string };
+        console.log("User role:", userWithRole.role || "No role found");
+      }
+    } catch (err) {
+      console.error("Error checking role:", err);
+    }
   };
 
   useEffect(() => {
-    loggedInUther();
+    checkUserRole();
+    testRoleInsert();
   }, []);
 
   return (

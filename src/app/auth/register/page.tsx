@@ -31,7 +31,7 @@ export default function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generalError, setGeneralError] = useState("");
 
-  const handleAuthError = (error: any) => {
+  const handleAuthError = (error: { message?: string }) => {
     const msg = error?.message?.toLowerCase() || "";
     if (msg.includes("already") || msg.includes("exists")) {
       return "An account with this email already exists.";
@@ -71,7 +71,8 @@ export default function RegisterPage() {
                 setIsSubmitting(true);
                 setGeneralError("");
                 try {
-                  const { data, error } = await authClient.signUp.email({
+                  // First create auth user
+                  const { error } = await authClient.signUp.email({
                     name: values.name,
                     email: values.email,
                     password: values.password,
@@ -83,6 +84,23 @@ export default function RegisterPage() {
                     toast.error(error.message);
                     return;
                   }
+
+                  // Then save user with role
+                  // const response = await fetch("/api/auth/register", {
+                  //   method: "POST",
+                  //   headers: {
+                  //     "Content-Type": "application/json",
+                  //   },
+                  //   body: JSON.stringify({
+                  //     name: values.name,
+                  //     email: values.email,
+                  //     password: values.password,
+                  //   }),
+                  // });
+                  // const result = await response.json();
+                  // if (!result.success) {
+                  //   throw new Error(result.error);
+                  // }
                   toast.success(
                     "Registration successful! Please check your email to verify your account."
                   );
