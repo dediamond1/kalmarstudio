@@ -29,8 +29,7 @@ export function ImageGallery({ images, productName }: ImageGalleryProps) {
   };
 
   // Default image if no images provided
-  const displayImages =
-    images?.length > 0 ? images : [localImages.placeholderImage];
+  const displayImages = images?.length > 0 ? images : [];
 
   return (
     <div className="space-y-4">
@@ -45,17 +44,17 @@ export function ImageGallery({ images, productName }: ImageGalleryProps) {
               <ZoomIn className="h-4 w-4" />
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl p-0 border-none bg-transparent">
-            <div className="relative aspect-square w-full bg-background rounded-lg overflow-hidden">
-              <Image
-                src={displayImages[currentImage]}
-                alt={`${productName} - enlarged view`}
-                fill
-                className="object-contain p-4"
-                priority
-              />
-            </div>
-          </DialogContent>
+          {/* <DialogContent className="max-w-3xl p-0 border-none bg-transparent"> */}
+          <div className="relative aspect-square w-full h-full bg-background rounded-lg overflow-hidden">
+            <Image
+              src={localImages.placeholderImage}
+              alt={`${productName} - enlarged view`}
+              fill
+              className="object-contain p-4"
+              priority
+            />
+          </div>
+          {/* </DialogContent> */}
         </Dialog>
 
         {/* <Image

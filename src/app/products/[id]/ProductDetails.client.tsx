@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Product } from "@/types/product";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -17,12 +18,16 @@ import {
   StarHalf,
   Package,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { SquarePen } from "lucide-react";
 
 interface ProductDetailsProps {
   product: Product;
 }
 
 export function ProductDetails({ product }: ProductDetailsProps) {
+  const router = useRouter();
+
   const [selectedOptions, setSelectedOptions] = useState({
     color: product.colors?.[0] || null,
     printType: product.printTypes?.[0] || null,
@@ -157,12 +162,24 @@ export function ProductDetails({ product }: ProductDetailsProps) {
             <Separator />
 
             {/* Add to Cart Button */}
-            <AddToCartButton
-              product={product}
-              selectedOptions={selectedOptions}
-              selections={selections}
-              getSelectedItems={getSelectedItems}
-            />
+            <div className="flex flex-row items-center gap-4">
+              <Button
+                size="lg"
+                className="flex-1 h-14 text-lg font-medium"
+                onClick={() => {
+                  router.push("/products/customize");
+                }}
+              >
+                <SquarePen className="h-5 w-5" />
+                Customize Image
+              </Button>
+              <AddToCartButton
+                product={product}
+                selectedOptions={selectedOptions}
+                selections={selections}
+                getSelectedItems={getSelectedItems}
+              />
+            </div>
 
             {/* Product Benefits */}
             <div className="grid grid-cols-2 gap-4 mt-6">

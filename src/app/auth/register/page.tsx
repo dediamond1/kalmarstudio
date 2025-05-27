@@ -72,7 +72,15 @@ export default function RegisterPage() {
                 setGeneralError("");
                 try {
                   // First create auth user
-                  const { error } = await authClient.signUp.email({
+                  // const newUser = await authClient.createUser({
+                  //   name: values.name,
+                  //   email: values.email,
+                  //   password: values.password,
+                  //   role: "admin",
+                  // });
+
+                  // console.log("[Register.tsx] newUser: ", newUser);
+                  const { data, error } = await authClient.signUp.email({
                     name: values.name,
                     email: values.email,
                     password: values.password,
@@ -84,26 +92,6 @@ export default function RegisterPage() {
                     toast.error(error.message);
                     return;
                   }
-
-                  // Then save user with role
-                  // const response = await fetch("/api/auth/register", {
-                  //   method: "POST",
-                  //   headers: {
-                  //     "Content-Type": "application/json",
-                  //   },
-                  //   body: JSON.stringify({
-                  //     name: values.name,
-                  //     email: values.email,
-                  //     password: values.password,
-                  //   }),
-                  // });
-                  // const result = await response.json();
-                  // if (!result.success) {
-                  //   throw new Error(result.error);
-                  // }
-                  toast.success(
-                    "Registration successful! Please check your email to verify your account."
-                  );
                   router.push("/dashboard");
                 } catch (err) {
                   console.error("Registration error:", err);

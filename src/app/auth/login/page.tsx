@@ -34,21 +34,6 @@ export default function LoginPage() {
     return "Login failed. Please try again later.";
   };
 
-  const testRoleInsert = async () => {
-    try {
-      const response = await fetch("/api/test-role");
-      const data = await response.json();
-      console.log("Test role API response:", data);
-      return data;
-    } catch (err) {
-      console.error("Error testing role:", err);
-      return {
-        success: false,
-        error: err instanceof Error ? err.message : "Unknown error",
-      };
-    }
-  };
-
   const checkUserRole = async () => {
     try {
       const { data: session, error } = await authClient.getSession();
@@ -68,7 +53,6 @@ export default function LoginPage() {
 
   useEffect(() => {
     checkUserRole();
-    testRoleInsert();
   }, []);
 
   return (
