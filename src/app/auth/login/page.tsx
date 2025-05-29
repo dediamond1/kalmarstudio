@@ -10,6 +10,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
+import { useDispatch } from "react-redux";
+import { setCredentials } from "@/app/features/authSlice";
 
 const LoginSchema = Yup.object().shape({
   email: Yup.string()
@@ -22,6 +24,7 @@ const LoginSchema = Yup.object().shape({
 
 export default function LoginPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generalError, setGeneralError] = useState("");
 
@@ -102,7 +105,18 @@ export default function LoginPage() {
                     throw new Error("Failed to fetch user details");
                   }
                   const userData = await userResponse.json();
-                  console.log(userData);
+
+                  // Save credentials to Redux store
+                  dispatch(
+                    setCredentials({
+                      token: data?.token || "",
+                      user: {
+                        email: userData.email,
+                        name: userData.name,
+                        role: userData.role,
+                      },
+                    })
+                  );
 
                   // Check user role and redirect accordingly
                   if (userData.role === "admin") {
