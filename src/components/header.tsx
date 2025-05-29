@@ -2,7 +2,15 @@
 
 import { Button } from "@/components/ui/button";
 import { X, ShoppingCart } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { authClient } from "@/lib/auth-client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import CartCount from "@/components/CartCount";
 import Container from "./ui/Container";
@@ -18,6 +26,26 @@ const navLinks = [
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    _getSession();
+  }, []);
+
+  const _onLogout = () => {
+    authClient.signOut();
+    setMobileMenuOpen(false);
+    _getSession();
+  };
+
+  const _getSession = () => {
+    authClient
+      .getSession()
+      .then(({ data: session }) => {
+        setIsLoggedIn(!!session?.user);
+      })
+      .catch(() => setIsLoggedIn(false));
+  };
 
   return (
     <Container>
@@ -40,12 +68,39 @@ export default function Header() {
             </a>
           ))}
           <div className="flex items-center gap-2">
-            <Button variant="outline" asChild>
-              <Link href="/auth/login">Login</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/auth/register">Sign Up</Link>
-            </Button>
+            {isLoggedIn ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <Avatar className="cursor-pointer">
+                    <AvatarImage src="" />
+                    <AvatarFallback>U</AvatarFallback>
+                  </Avatar>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile">Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/orders">Orders</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => authClient.signOut()}
+                    className="text-red-500"
+                  >
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Button variant="outline" asChild>
+                  <Link href="/auth/login">Login</Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/auth/register">Sign Up</Link>
+                </Button>
+              </>
+            )}
             <a href="/cart">
               <Button variant="ghost" size="icon" className="relative" asChild>
                 <div>
@@ -93,21 +148,58 @@ export default function Header() {
                       {link.name}
                     </a>
                   ))}
-                  <Button
-                    variant="outline"
-                    className="w-full mt-4"
-                    asChild
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Link href="/auth/login">Login</Link>
-                  </Button>
-                  <Button
-                    className="w-full mt-2"
-                    asChild
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Link href="/auth/register">Sign Up</Link>
-                  </Button>
+                  {isLoggedIn ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger>
+                        <Avatar className="cursor-pointer">
+                          <AvatarImage src="" />
+                          <AvatarFallback>U</AvatarFallback>
+                        </Avatar>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link
+                            href="/profile"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            Profile
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link
+                            href="/orders"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            Orders
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={_onLogout}
+                          className="text-red-500"
+                        >
+                          Logout
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : (
+                    <>
+                      <Button
+                        variant="outline"
+                        className="w-full mt-4"
+                        asChild
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Link href="/auth/login">Login</Link>
+                      </Button>
+                      <Button
+                        className="w-full mt-2"
+                        asChild
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Link href="/auth/register">Sign Up</Link>
+                      </Button>
+                    </>
+                  )}
                 </nav>
               </div>
             </div>

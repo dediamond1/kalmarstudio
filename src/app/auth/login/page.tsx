@@ -93,15 +93,31 @@ export default function LoginPage() {
                     toast.error(message);
                     return;
                   }
-                  console.log("Login successful:", data);
+
+                  // Fetch user details from MongoDB
+                  const userResponse = await fetch(
+                    `/api/users?email=${encodeURIComponent(values.email)}`
+                  );
+                  if (!userResponse.ok) {
+                    throw new Error("Failed to fetch user details");
+                  }
+                  const userData = await userResponse.json();
+                  console.log(userData);
+
+                  // Check user role and redirect accordingly
+                  if (userData.role === "admin") {
+                    router.push("/dashboard");
+                  } else {
+                    router.back();
+                  }
                   toast.success("Login successful");
-                  router.push("/dashboard");
                 } catch (err) {
                   console.error("Unexpected login error:", err);
                   setGeneralError(
                     "A technical error occurred. Please try again later."
                   );
                   toast.error("Something went wrong.");
+                  authClient.signOut();
                 } finally {
                   setIsSubmitting(false);
                 }
