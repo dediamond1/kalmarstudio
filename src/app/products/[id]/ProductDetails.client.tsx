@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SquarePen } from "lucide-react";
+import { useSelector } from "react-redux";
 
 interface ProductDetailsProps {
   product: Product;

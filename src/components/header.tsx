@@ -4,10 +4,9 @@ import { Button } from "@/components/ui/button";
 import { X, ShoppingCart } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { setCredentials } from "@/app/features/authSlice";
+import { setCredentials } from "@/redux/slices/authSlice";
 import { authClient } from "@/lib/auth-client";
 import { RootState } from "@/app/store";
-import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -29,7 +28,6 @@ const navLinks = [
 ];
 
 export default function Header() {
-  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dispatch = useDispatch();
   const { token, user } = useSelector((state: RootState) => state.auth);
@@ -74,7 +72,6 @@ export default function Header() {
     await authClient.signOut();
     dispatch(setCredentials({ token: "", user: null }));
     setIsLoggedIn(false);
-    router.push("/auth/login");
     setMobileMenuOpen(false);
   };
 

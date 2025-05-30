@@ -11,7 +11,7 @@ import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { useDispatch } from "react-redux";
-import { setCredentials } from "@/app/features/authSlice";
+import { setCredentials } from "@/redux/slices/authSlice";
 
 const LoginSchema = Yup.object().shape({
   email: Yup.string()
