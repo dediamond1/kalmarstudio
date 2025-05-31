@@ -5,6 +5,21 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { useUserStore } from "./user";
 import { saveCart } from "@/lib/api/cart";
 
+declare module "@/lib/api/cart" {
+  export interface SaveCartResponse {
+    success: boolean;
+    error?: string;
+    status?: number;
+    cartId?: string;
+  }
+
+  export function saveCart(
+    email: string,
+    items: CartItem[],
+    upsert?: boolean
+  ): Promise<SaveCartResponse>;
+}
+
 export interface CartItemSize {
   size: string;
   quantity: number;
@@ -50,20 +65,20 @@ async function saveToMongoDB(email: string, items: CartItem[]) {
     }
 
     console.log(`Saving cart for user ${email} via API`);
-    const result = await saveCart(email, items);
+    const result = await saveCart(email, items, true);
 
     if (result && "success" in result && result.success) {
-      console.log("Cart saved successfully via API. Cart ID:", result.cartId);
+      console.log("Cart upserted successfully via API");
     } else {
-      console.error("Failed to save cart via API:", {
+      console.error("Failed to upsert cart via API:", {
         error: result?.error,
         status: result?.status,
       });
       // Retry once after 1 second if failed
       setTimeout(async () => {
-        console.log("Retrying cart save...");
+        console.log("Retrying cart upsert...");
         try {
-          const retryResult = await saveCart(email, items);
+          const retryResult = await saveCart(email, items, true);
           console.log(
             "Retry result:",
             retryResult?.success ? "Success" : "Failed",
@@ -75,7 +90,7 @@ async function saveToMongoDB(email: string, items: CartItem[]) {
       }, 1000);
     }
   } catch (error) {
-    console.error("Failed to save cart via API:", {
+    console.error("Failed to upsert cart via API:", {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
