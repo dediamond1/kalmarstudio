@@ -11,6 +11,7 @@ import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { useUserStore } from "@/store/user";
+import { useCartStore } from "@/store/cart";
 
 const LoginSchema = Yup.object().shape({
   email: Yup.string()
@@ -99,6 +100,43 @@ export default function LoginPage() {
                   const userData = await useUserStore
                     .getState()
                     .fetchUserByEmail(values.email);
+
+                  // Fetch user's cart from MongoDB and merge with local cart
+                  try {
+                    const response = await fetch(
+                      `/api/carts?userId=${encodeURIComponent(values.email)}`
+                    );
+
+                    if (!response.ok) {
+                      throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    const dbCartItems = data.items || [];
+
+                    if (Array.isArray(dbCartItems)) {
+                      const cartStore = useCartStore.getState();
+                      // Merge DB cart with local cart
+                      dbCartItems.forEach((item) => {
+                        if (item?.productId && Array.isArray(item.sizes)) {
+                          item.sizes.forEach(
+                            (size: { size: string; quantity: number }) => {
+                              if (size?.size && size?.quantity) {
+                                cartStore.addSize(
+                                  item.productId,
+                                  size.size,
+                                  size.quantity
+                                );
+                              }
+                            }
+                          );
+                        }
+                      });
+                    }
+                  } catch (error) {
+                    console.error("Failed to fetch cart:", error);
+                    // Continue with login even if cart fetch fails
+                  }
 
                   // Check user role and redirect accordingly
                   if (userData.role === "admin") {
