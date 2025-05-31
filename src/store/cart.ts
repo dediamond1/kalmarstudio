@@ -42,15 +42,15 @@ export interface CartState {
   totalItems: () => number;
 }
 
-async function saveToMongoDB(userId: string, items: CartItem[]) {
+async function saveToMongoDB(email: string, items: CartItem[]) {
   try {
-    if (!userId) {
-      console.log("No user ID - skipping MongoDB save");
+    if (!email) {
+      console.log("No user email - skipping MongoDB save");
       return;
     }
 
-    console.log(`Saving cart for user ${userId} via API`);
-    const result = await saveCart(userId, items);
+    console.log(`Saving cart for user ${email} via API`);
+    const result = await saveCart(email, items);
 
     if (result && "success" in result && result.success) {
       console.log("Cart saved successfully via API. Cart ID:", result.cartId);
@@ -63,7 +63,7 @@ async function saveToMongoDB(userId: string, items: CartItem[]) {
       setTimeout(async () => {
         console.log("Retrying cart save...");
         try {
-          const retryResult = await saveCart(userId, items);
+          const retryResult = await saveCart(email, items);
           console.log(
             "Retry result:",
             retryResult?.success ? "Success" : "Failed",
@@ -89,12 +89,13 @@ export const useCartStore = create<CartState>()(
 
       addItem: (item) => {
         const { size, quantity = 1, ...rest } = item;
-        const existingItemIndex = get().items.findIndex(
+        const currentItems = get().items || [];
+        const existingItemIndex = currentItems.findIndex(
           (i) =>
-            i.productId === item.productId &&
-            i.color === item.color &&
-            i.printType === item.printType &&
-            i.material === item.material
+            i?.productId === item.productId &&
+            i?.color === item.color &&
+            i?.printType === item.printType &&
+            i?.material === item.material
         );
 
         if (existingItemIndex >= 0) {
@@ -109,8 +110,8 @@ export const useCartStore = create<CartState>()(
                 totalQuantity: quantity,
               },
             ];
-            const userId = useUserStore.getState().user?._id;
-            if (userId) saveToMongoDB(userId, newItems);
+            const email = useUserStore.getState().user?.email;
+            if (email) saveToMongoDB(email, newItems);
             return { items: newItems };
           });
         }
@@ -140,8 +141,8 @@ export const useCartStore = create<CartState>()(
               totalQuantity: newSizes.reduce((sum, s) => sum + s.quantity, 0),
             };
           });
-          const userId = useUserStore.getState().user?._id;
-          if (userId) saveToMongoDB(userId, newItems);
+          const email = useUserStore.getState().user?.email;
+          if (email) saveToMongoDB(email, newItems);
           return { items: newItems };
         });
       },
@@ -149,8 +150,8 @@ export const useCartStore = create<CartState>()(
       removeItem: (productId) => {
         set((state) => {
           const newItems = state.items.filter((i) => i.productId !== productId);
-          const userId = useUserStore.getState().user?._id;
-          if (userId) saveToMongoDB(userId, newItems);
+          const email = useUserStore.getState().user?.email;
+          if (email) saveToMongoDB(email, newItems);
           return { items: newItems };
         });
       },
@@ -174,8 +175,8 @@ export const useCartStore = create<CartState>()(
                 : null;
             })
             .filter((item): item is CartItem => item !== null);
-          const userId = useUserStore.getState().user?._id;
-          if (userId) saveToMongoDB(userId, newItems);
+          const email = useUserStore.getState().user?.email;
+          if (email) saveToMongoDB(email, newItems);
           return { items: newItems };
         });
       },
@@ -209,31 +210,41 @@ export const useCartStore = create<CartState>()(
               totalQuantity: newSizes.reduce((sum, s) => sum + s.quantity, 0),
             };
           });
-          const userId = useUserStore.getState().user?._id;
-          if (userId) saveToMongoDB(userId, newItems);
+          const email = useUserStore.getState().user?.email;
+          if (email) saveToMongoDB(email, newItems);
           return { items: newItems };
         });
       },
 
       clearCart: () => {
         set(() => {
-          const userId = useUserStore.getState().user?._id;
-          if (userId) saveToMongoDB(userId, []);
+          const email = useUserStore.getState().user?.email;
+          if (email) saveToMongoDB(email, []);
           return { items: [] };
         });
       },
 
       totalItems: () => {
-        return get().items.reduce(
-          (total, item) =>
-            total + item.sizes.reduce((sum, size) => sum + size.quantity, 0),
-          0
-        );
+        const items = get().items;
+        if (!Array.isArray(items)) return 0;
+        return items.reduce((total, item) => {
+          if (!item?.sizes || !Array.isArray(item.sizes)) return total;
+          return (
+            total +
+            item.sizes.reduce((sum, size) => sum + (size?.quantity || 0), 0)
+          );
+        }, 0);
       },
     }),
     {
       name: "cart-storage",
       storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({ items: state.items }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.items = Array.isArray(state.items) ? state.items : [];
+        }
+      },
     }
   )
 );
