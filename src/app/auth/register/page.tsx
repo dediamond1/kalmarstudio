@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
+import { useUserStore } from "@/store/user";
 
 const RegisterSchema = Yup.object().shape({
   name: Yup.string()
@@ -102,7 +103,10 @@ export default function RegisterPage() {
                     throw new Error("Failed to set user role");
                   }
 
+                  // Fetch and save user data using store method
+                  await useUserStore.getState().fetchUserByEmail(values.email);
                   router.back();
+                  toast.success("Registration successful!");
                 } catch (err) {
                   console.error("Registration error:", err);
                   const message =

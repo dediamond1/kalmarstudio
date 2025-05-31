@@ -3,10 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { X, ShoppingCart } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { setCredentials } from "@/redux/slices/authSlice";
 import { authClient } from "@/lib/auth-client";
-import { RootState } from "@/app/store";
+import { useUserStore } from "@/store/user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -29,9 +27,8 @@ const navLinks = [
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const dispatch = useDispatch();
-  const { token, user } = useSelector((state: RootState) => state.auth);
-  const [isLoggedIn, setIsLoggedIn] = useState(!!token);
+  const { user, fetchUserByEmail, clearUser } = useUserStore();
+  const [isLoggedIn, setIsLoggedIn] = useState(!!user);
 
   useEffect(() => {
     const checkAuthState = async () => {
@@ -41,24 +38,9 @@ export default function Header() {
           setIsLoggedIn(false);
           return;
         }
-        if (session?.user) {
-          const userResponse = await fetch(
-            `/api/users?email=${encodeURIComponent(session.user.email)}`
-          );
-          if (userResponse.ok) {
-            const userData = await userResponse.json();
-            dispatch(
-              setCredentials({
-                token: session?.session.token || "",
-                user: {
-                  email: userData.email,
-                  name: userData.name,
-                  role: userData.role,
-                },
-              })
-            );
-            setIsLoggedIn(true);
-          }
+        if (session?.user?.email) {
+          await fetchUserByEmail(session.user.email);
+          setIsLoggedIn(true);
         }
       } catch {
         setIsLoggedIn(false);
@@ -66,11 +48,11 @@ export default function Header() {
     };
 
     checkAuthState();
-  }, [dispatch]);
+  }, [fetchUserByEmail]);
 
   const handleLogout = async () => {
     await authClient.signOut();
-    dispatch(setCredentials({ token: "", user: null }));
+    clearUser();
     setIsLoggedIn(false);
     setMobileMenuOpen(false);
   };

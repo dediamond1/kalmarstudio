@@ -10,8 +10,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
-import { useDispatch } from "react-redux";
-import { setCredentials } from "@/redux/slices/authSlice";
+import { useUserStore } from "@/store/user";
 
 const LoginSchema = Yup.object().shape({
   email: Yup.string()
@@ -24,7 +23,6 @@ const LoginSchema = Yup.object().shape({
 
 export default function LoginPage() {
   const router = useRouter();
-  const dispatch = useDispatch();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generalError, setGeneralError] = useState("");
 
@@ -85,7 +83,7 @@ export default function LoginPage() {
                 setIsSubmitting(true);
                 setGeneralError("");
                 try {
-                  const { data, error } = await authClient.signIn.email({
+                  const { error } = await authClient.signIn.email({
                     email: values.email,
                     password: values.password,
                     rememberMe: false,
@@ -97,26 +95,10 @@ export default function LoginPage() {
                     return;
                   }
 
-                  // Fetch user details from MongoDB
-                  const userResponse = await fetch(
-                    `/api/users?email=${encodeURIComponent(values.email)}`
-                  );
-                  if (!userResponse.ok) {
-                    throw new Error("Failed to fetch user details");
-                  }
-                  const userData = await userResponse.json();
-
-                  // Save credentials to Redux store
-                  dispatch(
-                    setCredentials({
-                      token: data?.token || "",
-                      user: {
-                        email: userData.email,
-                        name: userData.name,
-                        role: userData.role,
-                      },
-                    })
-                  );
+                  // Fetch and save user data using store method
+                  const userData = await useUserStore
+                    .getState()
+                    .fetchUserByEmail(values.email);
 
                   // Check user role and redirect accordingly
                   if (userData.role === "admin") {
