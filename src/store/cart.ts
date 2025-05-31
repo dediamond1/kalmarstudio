@@ -1,10 +1,9 @@
-// src/store/cart.ts
 "use client";
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { useUserStore } from "./user";
-import { connectToDB } from "@/lib/mongoose";
+import { saveCart } from "@/lib/api/cart";
 
 export interface CartItemSize {
   size: string;
@@ -45,12 +44,41 @@ export interface CartState {
 
 async function saveToMongoDB(userId: string, items: CartItem[]) {
   try {
-    const db = await connectToDB();
-    await db.connection.db
-      .collection("carts")
-      .updateOne({ userId }, { $set: { items } }, { upsert: true });
+    if (!userId) {
+      console.log("No user ID - skipping MongoDB save");
+      return;
+    }
+
+    console.log(`Saving cart for user ${userId} via API`);
+    const result = await saveCart(userId, items);
+
+    if (result && "success" in result && result.success) {
+      console.log("Cart saved successfully via API. Cart ID:", result.cartId);
+    } else {
+      console.error("Failed to save cart via API:", {
+        error: result?.error,
+        status: result?.status,
+      });
+      // Retry once after 1 second if failed
+      setTimeout(async () => {
+        console.log("Retrying cart save...");
+        try {
+          const retryResult = await saveCart(userId, items);
+          console.log(
+            "Retry result:",
+            retryResult?.success ? "Success" : "Failed",
+            retryResult
+          );
+        } catch (retryError) {
+          console.error("Retry failed:", retryError);
+        }
+      }, 1000);
+    }
   } catch (error) {
-    console.error("Failed to save cart to MongoDB:", error);
+    console.error("Failed to save cart via API:", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
   }
 }
 
@@ -70,10 +98,8 @@ export const useCartStore = create<CartState>()(
         );
 
         if (existingItemIndex >= 0) {
-          // Item with same properties exists, add or update size
           get().addSize(item.productId, size, quantity);
         } else {
-          // Add new item
           set((state) => {
             const newItems = [
               ...state.items,
@@ -121,14 +147,17 @@ export const useCartStore = create<CartState>()(
       },
 
       removeItem: (productId) => {
-        set((state) => ({
-          items: state.items.filter((i) => i.productId !== productId),
-        }));
+        set((state) => {
+          const newItems = state.items.filter((i) => i.productId !== productId);
+          const userId = useUserStore.getState().user?._id;
+          if (userId) saveToMongoDB(userId, newItems);
+          return { items: newItems };
+        });
       },
 
       removeSize: (productId, size) => {
-        set((state) => ({
-          items: state.items
+        set((state) => {
+          const newItems = state.items
             .map((item) => {
               if (item.productId !== productId) return item;
 
@@ -144,8 +173,11 @@ export const useCartStore = create<CartState>()(
                   }
                 : null;
             })
-            .filter((item): item is CartItem => item !== null),
-        }));
+            .filter((item): item is CartItem => item !== null);
+          const userId = useUserStore.getState().user?._id;
+          if (userId) saveToMongoDB(userId, newItems);
+          return { items: newItems };
+        });
       },
 
       updateSizeQuantity: (productId, size, quantity) => {
@@ -153,15 +185,12 @@ export const useCartStore = create<CartState>()(
           return get().removeSize(productId, size);
         }
 
-        set((state) => ({
-          items: state.items.map((item) => {
-            // Find the matching item
+        set((state) => {
+          const newItems = state.items.map((item) => {
             if (item.productId !== productId) return item;
 
-            // Find the size in this item
             const sizeIndex = item.sizes.findIndex((s) => s.size === size);
 
-            // If size doesn't exist, add it
             if (sizeIndex === -1) {
               const newSizes = [...item.sizes, { size, quantity }];
               return {
@@ -171,7 +200,6 @@ export const useCartStore = create<CartState>()(
               };
             }
 
-            // Update existing size
             const newSizes = [...item.sizes];
             newSizes[sizeIndex] = { ...newSizes[sizeIndex], quantity };
 
@@ -180,12 +208,19 @@ export const useCartStore = create<CartState>()(
               sizes: newSizes,
               totalQuantity: newSizes.reduce((sum, s) => sum + s.quantity, 0),
             };
-          }),
-        }));
+          });
+          const userId = useUserStore.getState().user?._id;
+          if (userId) saveToMongoDB(userId, newItems);
+          return { items: newItems };
+        });
       },
 
       clearCart: () => {
-        set({ items: [] });
+        set(() => {
+          const userId = useUserStore.getState().user?._id;
+          if (userId) saveToMongoDB(userId, []);
+          return { items: [] };
+        });
       },
 
       totalItems: () => {

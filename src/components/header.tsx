@@ -5,6 +5,7 @@ import { X, ShoppingCart } from "lucide-react";
 import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { useUserStore } from "@/store/user";
+import { useCartStore } from "@/store/cart";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -53,6 +54,7 @@ export default function Header() {
   const handleLogout = async () => {
     await authClient.signOut();
     clearUser();
+    useCartStore.getState().clearCart();
     setIsLoggedIn(false);
     setMobileMenuOpen(false);
   };

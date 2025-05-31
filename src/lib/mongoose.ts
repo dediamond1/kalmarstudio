@@ -1,4 +1,4 @@
-import mongoose, { Mongoose } from 'mongoose';
+import mongoose, { Mongoose } from "mongoose";
 
 interface CachedMongoose {
   conn: Mongoose | null;
@@ -8,14 +8,19 @@ interface CachedMongoose {
 const DATABASE_URL = process.env.DATABASE_URL;
 
 if (!DATABASE_URL) {
-  throw new Error('Please define the DATABASE_URL environment variable');
+  throw new Error("DATABASE_URL environment variable not defined");
 }
 
-declare global {
-  var mongooseCache: CachedMongoose;
+interface CustomGlobal {
+  mongooseCache: CachedMongoose;
 }
 
-let cached: CachedMongoose = global.mongooseCache || { conn: null, promise: null };
+declare const global: CustomGlobal & typeof globalThis;
+
+// Initialize cache if it doesn't exist
+const cached: CachedMongoose =
+  global.mongooseCache ||
+  (global.mongooseCache = { conn: null, promise: null });
 
 export async function connectToDB(): Promise<Mongoose> {
   if (cached.conn) {
@@ -25,16 +30,27 @@ export async function connectToDB(): Promise<Mongoose> {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
     };
 
-    cached.promise = mongoose.connect(DATABASE_URL as string, opts);
+    cached.promise = mongoose
+      .connect(DATABASE_URL!, opts)
+      .then((conn) => {
+        console.log("MongoDB connected successfully");
+        return conn;
+      })
+      .catch((e) => {
+        console.error("MongoDB connection error:", e);
+        throw e; // Re-throw to prevent silent failures
+      });
   }
 
   try {
     cached.conn = await cached.promise;
     return cached.conn;
   } catch (e) {
-    cached.promise = null;
+    cached.promise = null; // Reset promise on error
     throw e;
   }
 }

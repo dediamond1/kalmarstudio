@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useCartStore } from "@/store/cart";
 import { ShoppingCart, Check } from "lucide-react";
-import { useSelector } from "react-redux";
-import { RootState } from "@/redux/store";
 import { AlertModal } from "../common/AlertModal";
 import { useRouter } from "next/navigation";
 import { Routes } from "@/config/Routes";
+import { useUserStore } from "@/store/user";
+import { saveCart } from "@/lib/api/cart";
 
 interface AddToCartButtonProps {
   product: Product;
@@ -20,33 +20,26 @@ interface AddToCartButtonProps {
     printType: string | null;
     material: string | null;
   };
-  selections: {
-    [key: string]: {
-      selected: boolean;
-      quantity: number;
-    };
-  };
   getSelectedItems: () => Array<{ size: string; quantity: number }>;
 }
 
 export function AddToCartButton({
   product,
   selectedOptions,
-  selections,
   getSelectedItems,
 }: AddToCartButtonProps) {
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [added, setAdded] = useState(false);
   const { toast } = useToast();
-  const { addItem, updateSizeQuantity } = useCartStore();
-  const { token } = useSelector((state: RootState) => state?.auth);
+  const { addItem } = useCartStore();
+  const { user } = useUserStore();
 
   const [showAlert, setShowAlert] = useState(false);
   const router = useRouter();
 
-  const handleAddToCart = () => {
-    console.log("AddToCartButton", token);
-    if (!token) {
+  const handleAddToCart = async () => {
+    console.log("AddToCartButton", user);
+    if (!user) {
       setShowAlert(true);
     } else {
       setIsAddingToCart(true);
@@ -91,6 +84,7 @@ export function AddToCartButton({
 
         // Add all selected sizes with their quantities
         if (selectedItems.length > 0) {
+          // First update local state
           selectedItems.forEach(({ size, quantity }) => {
             addItem({
               ...cartItemBase,
@@ -98,13 +92,21 @@ export function AddToCartButton({
               quantity,
             });
           });
+
+          // Then explicitly trigger API save with current cart state
+          const currentCart = useCartStore.getState().items;
+          try {
+            await saveCart(user?.email, currentCart);
+          } catch (error) {
+            console.error("Failed to save cart via API:", error);
+          }
         }
 
-        let totalItems = selectedItems.reduce(
+        const totalItems = selectedItems.reduce(
           (sum, { quantity }) => sum + quantity,
           0
         );
-        let sizeDescriptions = selectedItems.map(
+        const sizeDescriptions = selectedItems.map(
           ({ size, quantity }) => `${quantity} × ${size}`
         );
 
