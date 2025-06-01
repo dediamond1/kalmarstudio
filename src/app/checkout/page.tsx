@@ -6,6 +6,7 @@ import { useCartStore } from "@/store/cart";
 import CheckoutForm from "./components/CheckoutForm";
 import { useState, useEffect } from "react";
 import { AddAddressModal } from "./components/AddAddressModal";
+import { AlertModal } from "@/components/common/AlertModal";
 import { CheckoutProvider } from "./context";
 import { createPaymentIntent } from "@/lib/api/payments";
 import { useToast } from "@/components/ui/toast";
@@ -31,30 +32,7 @@ export function CheckoutContent() {
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
   const [selectedShippingMethod, setSelectedShippingMethod] =
     useState("standard");
-  const [addresses, setAddresses] = useState([
-    {
-      fullName: "Sunny Singh",
-      email: "sunny@example.com",
-      contactNo: "+1 555-123-4567",
-      street: "123 Main St, Apt 4B",
-      city: "New York",
-      state: "NY",
-      zipCode: "10001",
-      country: "United States",
-    },
-    {
-      fullName: "John Doe",
-      email: "john@example.com",
-      contactNo: "+1 555-123-4567",
-      street: "123 Main St, Apt 4B",
-      city: "New York",
-      state: "NY",
-      zipCode: "10001",
-      country: "United States",
-    },
-  ]);
-
-  const handleSaveAddress = (newAddress: {
+  interface Address {
     fullName: string;
     email: string;
     contactNo: string;
@@ -63,7 +41,13 @@ export function CheckoutContent() {
     state: string;
     zipCode: string;
     country: string;
-  }) => {
+  }
+
+  const [addresses, setAddresses] = useState<Address[]>([]);
+
+  const [showAlert, setShowAlert] = useState(false);
+
+  const handleSaveAddress = (newAddress: Address) => {
     setAddresses([...addresses, newAddress]);
   };
 
@@ -93,8 +77,24 @@ export function CheckoutContent() {
     setupPayment();
   }, [items, total]);
 
+  const handlePayment = () => {
+    if (addresses.length < 1 || selectedAddressIndex === undefined) {
+      setShowAlert(true);
+      return false;
+    }
+    return true;
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
+      <AlertModal
+        open={showAlert}
+        onOpenChange={setShowAlert}
+        title="Address Required"
+        message="Please add and select a shipping address before proceeding with payment."
+        confirmText="OK"
+        onConfirm={() => {}}
+      />
       <h1 className="text-2xl font-bold mb-8">Checkout</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -231,7 +231,7 @@ export function CheckoutContent() {
 
           {clientSecret ? (
             <Elements stripe={stripePromise} options={{ clientSecret }}>
-              <CheckoutForm />
+              <CheckoutForm onPayment={handlePayment} />
             </Elements>
           ) : (
             <div className="flex justify-center items-center h-32">

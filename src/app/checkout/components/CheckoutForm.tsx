@@ -1,13 +1,17 @@
 "use client";
 
 import { useState } from "react";
+
+interface CheckoutFormProps {
+  onPayment: () => boolean;
+}
 import { useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
 import { CheckoutSuccessModal } from "./CheckoutSuccessModal";
 import { useCheckout } from "../context";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 
-export default function CheckoutForm() {
+export default function CheckoutForm({ onPayment }: CheckoutFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const { state, dispatch } = useCheckout();
@@ -17,7 +21,7 @@ export default function CheckoutForm() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!stripe || !elements) {
+    if (!stripe || !elements || !onPayment()) {
       return;
     }
     try {
