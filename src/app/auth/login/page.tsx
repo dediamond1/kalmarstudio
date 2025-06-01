@@ -116,22 +116,8 @@ export default function LoginPage() {
 
                     if (Array.isArray(dbCartItems)) {
                       const cartStore = useCartStore.getState();
-                      // Merge DB cart with local cart
-                      dbCartItems.forEach((item) => {
-                        if (item?.productId && Array.isArray(item.sizes)) {
-                          item.sizes.forEach(
-                            (size: { size: string; quantity: number }) => {
-                              if (size?.size && size?.quantity) {
-                                cartStore.addSize(
-                                  item.productId,
-                                  size.size,
-                                  size.quantity
-                                );
-                              }
-                            }
-                          );
-                        }
-                      });
+                      // Set all cart items at once
+                      cartStore.setItems(dbCartItems);
                     }
                   } catch (error) {
                     console.error("Failed to fetch cart:", error);

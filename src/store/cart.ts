@@ -46,6 +46,7 @@ export interface CartState {
     }
   ) => void;
   addSize: (productId: string, size: string, quantity?: number) => void;
+  setItems: (items: CartItem[]) => void;
   removeItem: (productId: string) => void;
   removeSize: (productId: string, size: string) => void;
   updateSizeQuantity: (
@@ -228,6 +229,14 @@ export const useCartStore = create<CartState>()(
           const email = useUserStore.getState().user?.email;
           if (email) saveToMongoDB(email, newItems);
           return { items: newItems };
+        });
+      },
+
+      setItems: (items) => {
+        set(() => {
+          const email = useUserStore.getState().user?.email;
+          if (email) saveToMongoDB(email, items);
+          return { items };
         });
       },
 
