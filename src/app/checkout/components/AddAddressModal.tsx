@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import { useUserStore } from "@/store/user";
 
 type Address = {
   fullName: string;
@@ -29,9 +30,9 @@ type Props = {
 };
 
 export const AddAddressModal = ({ open, onOpenChange, onSave }: Props) => {
-  const [address, setAddress] = useState<Address>({
+  const userEmail = useUserStore((state) => state.user?.email);
+  const [address, setAddress] = useState<Omit<Address, "email">>({
     fullName: "",
-    email: "",
     contactNo: "",
     street: "",
     city: "",
@@ -42,7 +43,17 @@ export const AddAddressModal = ({ open, onOpenChange, onSave }: Props) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(address);
+    if (!userEmail) return;
+    onSave({ ...address, email: userEmail });
+    setAddress({
+      fullName: "",
+      contactNo: "",
+      street: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      country: "",
+    });
     onOpenChange(false);
   };
 
@@ -69,15 +80,7 @@ export const AddAddressModal = ({ open, onOpenChange, onSave }: Props) => {
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={address.email}
-                onChange={(e) =>
-                  setAddress({ ...address, email: e.target.value })
-                }
-                required
-              />
+              <Input id="email" type="email" value={userEmail || ""} disabled />
             </div>
           </div>
 
@@ -88,9 +91,12 @@ export const AddAddressModal = ({ open, onOpenChange, onSave }: Props) => {
                 id="contactNo"
                 type="tel"
                 value={address.contactNo}
-                onChange={(e) =>
-                  setAddress({ ...address, contactNo: e.target.value })
-                }
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, "");
+                  setAddress({ ...address, contactNo: value });
+                }}
+                pattern="[0-9]*"
+                inputMode="numeric"
                 required
               />
             </div>
@@ -140,9 +146,12 @@ export const AddAddressModal = ({ open, onOpenChange, onSave }: Props) => {
               <Input
                 id="zipCode"
                 value={address.zipCode}
-                onChange={(e) =>
-                  setAddress({ ...address, zipCode: e.target.value })
-                }
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, "");
+                  setAddress({ ...address, zipCode: value });
+                }}
+                pattern="[0-9]*"
+                inputMode="numeric"
                 required
               />
             </div>

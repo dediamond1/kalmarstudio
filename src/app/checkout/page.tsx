@@ -10,6 +10,7 @@ import { AlertModal } from "@/components/common/AlertModal";
 import { CheckoutProvider } from "./context";
 import { createPaymentIntent } from "@/lib/api/payments";
 import { useToast } from "@/components/ui/toast";
+import { useUserStore } from "@/store/user";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
@@ -44,11 +45,61 @@ export function CheckoutContent() {
   }
 
   const [addresses, setAddresses] = useState<Address[]>([]);
-
   const [showAlert, setShowAlert] = useState(false);
 
-  const handleSaveAddress = (newAddress: Address) => {
-    setAddresses([...addresses, newAddress]);
+  useEffect(() => {
+    async function loadAddresses() {
+      try {
+        const userEmail = useUserStore.getState().user?.email;
+        if (userEmail) {
+          const response = await fetch(
+            `/api/addresses?email=${encodeURIComponent(userEmail)}`
+          );
+          if (response.ok) {
+            const { addresses: fetchedAddresses = [] } = await response.json();
+            if (!Array.isArray(fetchedAddresses)) {
+              throw new Error("Invalid addresses data format");
+            }
+            setAddresses(fetchedAddresses);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load addresses:", error);
+        toast({
+          title: "Address Error",
+          description:
+            error instanceof Error ? error.message : "Failed to load addresses",
+          variant: "destructive",
+        });
+      }
+    }
+    loadAddresses();
+  }, []);
+
+  const handleSaveAddress = async (newAddress: Address) => {
+    try {
+      const response = await fetch("/api/addresses", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newAddress),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to save address");
+      }
+      setAddresses([...addresses, data.address]);
+    } catch (error) {
+      console.error("Error saving address:", error);
+      toast({
+        title: "Address Error",
+        description:
+          error instanceof Error ? error.message : "Failed to save address",
+        variant: "destructive",
+      });
+    }
   };
 
   useEffect(() => {
@@ -138,12 +189,14 @@ export function CheckoutContent() {
                   )}
                 </div>
               ))}
-              <button
-                className="mt-2 text-sm text-primary cursor-pointer"
-                onClick={() => setIsAddressModalOpen(true)}
-              >
-                + Add New Address
-              </button>
+              {addresses?.length < 3 && (
+                <button
+                  className="mt-2 text-sm text-primary cursor-pointer"
+                  onClick={() => setIsAddressModalOpen(true)}
+                >
+                  + Add New Address
+                </button>
+              )}
               <AddAddressModal
                 open={isAddressModalOpen}
                 onOpenChange={setIsAddressModalOpen}
