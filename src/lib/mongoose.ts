@@ -38,7 +38,6 @@ export async function connectToDB(): Promise<Mongoose> {
       minPoolSize: 2,
       connectTimeoutMS: 30000,
       heartbeatFrequencyMS: 10000,
-      serverSelectionTryOnce: false, // Keep trying until timeout
     };
 
     cached.promise = mongoose
