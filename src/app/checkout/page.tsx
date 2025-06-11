@@ -12,10 +12,23 @@ import { createPaymentIntent } from "@/lib/api/payments";
 import { useToast } from "@/components/ui/toast";
 import { useUserStore } from "@/store/user";
 import { Trash2 } from "lucide-react";
+import { CheckoutSuccessModal } from "./components/CheckoutSuccessModal";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 );
+
+interface Address {
+  _id?: string;
+  fullName: string;
+  email: string;
+  contactNo: string;
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+}
 
 export function CheckoutContent() {
   const [clientSecret, setClientSecret] = useState("");
@@ -34,17 +47,9 @@ export function CheckoutContent() {
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
   const [selectedShippingMethod, setSelectedShippingMethod] =
     useState("standard");
-  interface Address {
-    _id?: string;
-    fullName: string;
-    email: string;
-    contactNo: string;
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  }
+
+  const [showSuccessOrderModal, setShowSuccessOrderModal] = useState(false);
+  const [orderId, setOrderId] = useState("");
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [showAlert, setShowAlert] = useState(false);
@@ -213,6 +218,9 @@ export function CheckoutContent() {
         const data = await response.json();
         throw new Error(data.error || "Failed to create order");
       }
+
+      const result = response?.json();
+      console.log("Checkout.tsx", result);
 
       return true;
     } catch (error) {
@@ -396,6 +404,12 @@ export function CheckoutContent() {
           )}
         </div>
       </div>
+
+      <CheckoutSuccessModal
+        open={showSuccessOrderModal}
+        onOpenChange={setShowSuccessOrderModal}
+        orderId={`ORDER-${orderId}`}
+      />
     </div>
   );
 }

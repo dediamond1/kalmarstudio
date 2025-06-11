@@ -1,12 +1,8 @@
 "use client";
-
-import { useState } from "react";
-
 interface CheckoutFormProps {
   onPayment: () => Promise<boolean>;
 }
 import { useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
-import { CheckoutSuccessModal } from "./CheckoutSuccessModal";
 import { useCheckout } from "../context";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -18,8 +14,6 @@ export default function CheckoutForm({
   const elements = useElements();
   const { state, dispatch } = useCheckout();
   const { toast } = useToast();
-
-  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -76,12 +70,6 @@ export default function CheckoutForm({
           {state.isLoading ? "Processing..." : "Pay Now"}
         </Button>
       </form>
-
-      <CheckoutSuccessModal
-        open={showSuccess}
-        onOpenChange={setShowSuccess}
-        orderId={`DEMO-${Math.floor(Math.random() * 10000)}`}
-      />
     </>
   );
 }
