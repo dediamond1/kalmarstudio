@@ -11,6 +11,7 @@ import { CheckoutProvider } from "./context";
 import { createPaymentIntent } from "@/lib/api/payments";
 import { useToast } from "@/components/ui/toast";
 import { useUserStore } from "@/store/user";
+import { Trash2 } from "lucide-react";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
@@ -34,6 +35,7 @@ export function CheckoutContent() {
   const [selectedShippingMethod, setSelectedShippingMethod] =
     useState("standard");
   interface Address {
+    _id?: string;
     fullName: string;
     email: string;
     contactNo: string;
@@ -75,6 +77,38 @@ export function CheckoutContent() {
     }
     loadAddresses();
   }, []);
+
+  const handleDeleteAddress = async (index: number) => {
+    try {
+      const addressToDelete = addresses[index];
+      console.log("Deleting address:", addressToDelete);
+      const response = await fetch("/api/addresses", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ _id: addressToDelete._id }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete address");
+      }
+
+      setAddresses(addresses.filter((_, i) => i !== index));
+      if (selectedAddressIndex === index) {
+        setSelectedAddressIndex(0);
+      }
+    } catch (error) {
+      console.error("Error deleting address:", error);
+      toast({
+        title: "Address Error",
+        description:
+          error instanceof Error ? error.message : "Failed to delete address",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSaveAddress = async (newAddress: Address) => {
     try {
@@ -167,11 +201,23 @@ export function CheckoutContent() {
                 >
                   <div className="flex justify-between items-start">
                     <h3 className="font-medium">Shipping Address</h3>
-                    {selectedAddressIndex === index && (
-                      <span className="text-primary font-medium">
-                        ✓ Selected
-                      </span>
-                    )}
+                    <div className="flex gap-2">
+                      {selectedAddressIndex === index && (
+                        <span className="text-primary font-medium">
+                          ✓ Selected
+                        </span>
+                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteAddress(index);
+                        }}
+                        className="text-red-500 hover:text-red-700 p-1"
+                        title="Delete address"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
                   </div>
                   {address.fullName && (
                     <p className="text-muted-foreground">{address.fullName}</p>

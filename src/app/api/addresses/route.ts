@@ -84,6 +84,38 @@ export async function POST(request: Request) {
   }
 }
 
+export async function DELETE(request: Request) {
+  try {
+    await connectToDB();
+    const body = await request.json();
+    const { _id } = body;
+
+    if (!_id) {
+      return NextResponse.json(
+        { error: "Address ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const result = await Address.findByIdAndDelete(_id);
+
+    if (!result) {
+      return NextResponse.json({ error: "Address not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Address deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting address:", error);
+    return NextResponse.json(
+      { error: "Failed to delete address" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function GET(request: Request) {
   try {
     await connectToDB();
