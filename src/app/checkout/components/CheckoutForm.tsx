@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 interface CheckoutFormProps {
-  onPayment: () => boolean;
+  onPayment: () => Promise<boolean>;
 }
 import { useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
 import { CheckoutSuccessModal } from "./CheckoutSuccessModal";
@@ -11,7 +11,9 @@ import { useCheckout } from "../context";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 
-export default function CheckoutForm({ onPayment }: CheckoutFormProps) {
+export default function CheckoutForm({
+  onPayment,
+}: CheckoutFormProps): React.JSX.Element {
   const stripe = useStripe();
   const elements = useElements();
   const { state, dispatch } = useCheckout();
@@ -21,7 +23,12 @@ export default function CheckoutForm({ onPayment }: CheckoutFormProps) {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!stripe || !elements || !onPayment()) {
+    if (!stripe || !elements) {
+      return;
+    }
+
+    const paymentValid = await onPayment();
+    if (!paymentValid) {
       return;
     }
     try {
@@ -29,7 +36,7 @@ export default function CheckoutForm({ onPayment }: CheckoutFormProps) {
 
       // Mock successful payment
       await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate processing delay
-      setShowSuccess(true);
+      // setShowSuccess(true);
     } catch (error) {
       toast({
         title: "Payment Error",

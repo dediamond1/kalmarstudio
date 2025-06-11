@@ -1,57 +1,76 @@
-import { NextResponse } from 'next/server'
-import { OrderModel } from '@/models/schemas/order.schema'
-import { connectToDB } from '@/lib/mongoose'
+import { NextResponse } from "next/server";
+import { connectToDB } from "@/lib/mongoose";
+import Order from "../../../models/order";
+import mongoose from "mongoose";
 
 export async function POST(request: Request) {
   try {
-    await connectToDB()
-    const body = await request.json()
+    await connectToDB();
+    if (mongoose.connection.readyState !== 1) {
+      throw new Error("Failed to connect to database");
+    }
+    console.log("Connected to DB");
 
-    // Basic validation - just check for items array
- 
+    const body = await request.json();
+    console.log("Request body:", body);
 
-    // Calculate totals
-    const subtotal = body.items.reduce(
-      (sum: number, item: any) => sum + (item.price * item.quantity),
-      0
-    )
-    const total = subtotal + (body.tax || 0) + (body.shippingCost || 0)
+    const {
+      items,
+      shippingAddress,
+      shippingMethod,
+      payment,
+      status,
+      customerEmail,
+    } = body;
 
-    const order = new OrderModel({
-      customerId: body.customerId,
-      items: body.items,
-      subtotal,
-      tax: body.tax || 0,
-      shippingCost: body.shippingCost || 0,
-      total,
-      status: 'pending',
-      paymentMethod: body.paymentMethod,
-      shippingAddress: body.shippingAddress,
-      billingAddress: body.billingAddress || body.shippingAddress
-    })
+    // Validate required fields
+    if (
+      !items ||
+      !shippingAddress ||
+      !shippingMethod ||
+      !payment ||
+      !customerEmail
+    ) {
+      console.error("Missing required fields");
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
 
-    await order.save()
+    console.log("Creating new order...");
+    // Create new order
+    const newOrder = await Order.create({
+      customerEmail,
+      items,
+      shippingAddress,
+      shippingMethod,
+      payment,
+      status: status || "Processing",
+      createdAt: new Date(),
+    });
 
-    return NextResponse.json(order, { status: 201 })
+    return NextResponse.json({
+      success: true,
+      order: newOrder,
+    });
   } catch (error) {
-    console.error('Error creating order:', error)
+    console.error("Error creating order:", error);
+    if (error instanceof mongoose.Error.ValidationError) {
+      return NextResponse.json(
+        {
+          error: "Validation Error",
+          details: Object.values(error.errors).map((err) => err.message),
+        },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
-      { error: 'Failed to create order', errors: error },
+      {
+        error: "Failed to create order",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
-    )
-  }
-}
-
-export async function GET() {
-  try {
-    await connectToDB()
-    const orders = await OrderModel.find().sort({ createdAt: -1 })
-    return NextResponse.json(orders)
-  } catch (error) {
-    console.error('Error fetching orders:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch orders' },
-      { status: 500 }
-    )
+    );
   }
 }

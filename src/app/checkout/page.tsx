@@ -162,12 +162,69 @@ export function CheckoutContent() {
     setupPayment();
   }, [items, total]);
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     if (addresses.length < 1 || selectedAddressIndex === undefined) {
       setShowAlert(true);
       return false;
     }
-    return true;
+
+    const orderData = {
+      items: items.map((item) => ({
+        name: item.name,
+        price: item.price,
+        sizes: item.sizes.map((size) => ({
+          size: size.size,
+          quantity: size.quantity,
+        })),
+        image: item.image,
+      })),
+      shippingAddress: addresses[selectedAddressIndex],
+      shippingMethod: {
+        type: selectedShippingMethod,
+        cost: selectedShippingMethod === "standard" ? 5.99 : 12.99,
+        estimatedDelivery:
+          selectedShippingMethod === "standard"
+            ? "3-5 business days"
+            : "1-2 business days",
+      },
+      payment: {
+        amount: total + (selectedShippingMethod === "standard" ? 5.99 : 12.99),
+        currency: "USD",
+        status: "pending",
+      },
+      status: "Processing",
+      customerEmail: useUserStore.getState().user?.email,
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...orderData,
+          customerEmail: useUserStore.getState().user?.email,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to create order");
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Order creation error:", error);
+      toast({
+        title: "Order Error",
+        description:
+          error instanceof Error ? error.message : "Failed to create order",
+        variant: "destructive",
+      });
+      return false;
+    }
   };
 
   return (
