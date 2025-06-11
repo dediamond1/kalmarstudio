@@ -1,15 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { sampleOrders } from "@/json/ordersJson";
 import { OrderStatsCards } from "./order-stats-cards";
 import { OrdersFilters } from "./orders-filters";
 import { OrdersTable } from "./orders-table";
+import { Order } from "@/types/order";
 
-export default function Orders() {
-  const [filteredOrders, setFilteredOrders] = useState(sampleOrders);
-  const orders = sampleOrders;
-  const loading = false;
+interface OrdersProps {
+  orders?: Order[];
+  loading?: boolean;
+}
+
+export default function Orders({ orders = [], loading = false }: OrdersProps) {
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>(orders);
 
   // Calculate stats for the cards
   const stats = {

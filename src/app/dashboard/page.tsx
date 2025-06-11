@@ -1,7 +1,40 @@
+"use client";
+
 import Orders from "@/components/dashboard/Orders";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/components/ui/toast";
+import { useState, useEffect } from "react";
+import { Order } from "@/types/order";
 
 export default function DashboardPage() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await fetch("/api/orders");
+        if (!response.ok) {
+          throw new Error("Failed to fetch orders");
+        }
+        const data = await response.json();
+        setOrders(data.orders || []);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description:
+            error instanceof Error ? error.message : "Failed to load orders",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
   return (
     <div>
       <div className="mt-6 xl:mt-12">
@@ -25,7 +58,7 @@ export default function DashboardPage() {
           {/* <CardItem title="Orders" value={0} /> */}
         </div>
       </div>
-      <Orders />
+      <Orders orders={orders} loading={loading} />
     </div>
   );
 }

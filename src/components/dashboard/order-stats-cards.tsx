@@ -16,12 +16,12 @@ export function OrderStatsCards({
   value,
 }: StatsCardsProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <StatCard title="Total Orders" value={total} />
       <StatCard title="Pending" value={pending} status="pending" />
       <StatCard title="Processing" value={processing} status="processing" />
       <StatCard title="Completed" value={completed} status="completed" />
-      <StatCard title="Total Value" value={`$${value}`} />
+      {/* <StatCard title="Total Value" value={`$${value}`} /> */}
     </div>
   );
 }

@@ -10,18 +10,17 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const email = searchParams.get("email");
 
-    if (!email) {
-      return NextResponse.json(
-        { error: "Email parameter is required" },
-        { status: 400 }
-      );
+    if (email) {
+      // Return orders filtered by email if provided
+      const orders = await Order.find({ customerEmail: email })
+        .sort({ createdAt: -1 })
+        .lean();
+      return NextResponse.json({ orders });
+    } else {
+      // Return all orders if no email provided
+      const orders = await Order.find().sort({ createdAt: -1 }).lean();
+      return NextResponse.json({ orders });
     }
-
-    const orders = await Order.find({ customerEmail: email })
-      .sort({ createdAt: -1 })
-      .lean();
-
-    return NextResponse.json({ orders });
   } catch (error) {
     console.error("Error fetching orders:", error);
     return NextResponse.json(

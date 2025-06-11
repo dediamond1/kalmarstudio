@@ -54,8 +54,10 @@ export function OrdersTable({
       <TableBody>
         {orders.map((order) => (
           <TableRow key={order._id}>
-            <TableCell className="font-medium">{order._id}</TableCell>
-            <TableCell>{order.customerId}</TableCell>
+            <TableCell className="font-medium">
+              #{order._id.toString().slice(-6).toUpperCase()}
+            </TableCell>
+            <TableCell>{order.customerEmail || "No email"}</TableCell>
             <TableCell>
               {new Date(order.createdAt).toLocaleDateString()}
             </TableCell>
@@ -64,7 +66,9 @@ export function OrdersTable({
                 {order.status}
               </Badge>
             </TableCell>
-            <TableCell>${order.total.toFixed(2)}</TableCell>
+            <TableCell>
+              ${order.payment?.amount?.toFixed(2) || "0.00"}
+            </TableCell>
             <TableCell>
               <Button
                 variant="ghost"

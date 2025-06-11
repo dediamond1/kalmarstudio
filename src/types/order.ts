@@ -14,14 +14,14 @@ export interface OrderItem {
 }
 
 export interface PaymentDetails {
-  method: 'credit_card' | 'paypal' | 'bank_transfer';
+  method: "credit_card" | "paypal" | "bank_transfer";
   transactionId?: string;
-  status: 'pending' | 'completed' | 'failed' | 'refunded';
+  status: "pending" | "completed" | "failed" | "refunded";
   amount: number;
 }
 
 export interface ShippingDetails {
-  method: 'standard' | 'express' | 'priority';
+  method: "standard" | "express" | "priority";
   trackingNumber?: string;
   cost: number;
   estimatedDelivery?: Date;
@@ -58,7 +58,7 @@ export interface Order {
   tax: number;
   shippingCost: number;
   total: number;
-  status: 'pending' | 'processing' | 'completed' | 'shipped' | 'cancelled';
+  status: "pending" | "processing" | "completed" | "shipped" | "cancelled";
   paymentMethod: string;
   design?: DesignDetails;
   payment?: PaymentDetails;
@@ -68,6 +68,7 @@ export interface Order {
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
+  customerEmail?: string;
 }
 
 // Legacy types for backward compatibility
@@ -81,11 +82,12 @@ export interface LegacyOrderItem {
   printType?: string;
 }
 
-export interface LegacyOrder extends Omit<Order, 'items' | 'paymentMethod' | 'payment'> {
+export interface LegacyOrder
+  extends Omit<Order, "items" | "paymentMethod" | "payment"> {
   items: LegacyOrderItem[];
   payment: {
-    status: 'Pending' | 'Paid' | 'Refunded';
-    method: 'credit_card' | 'paypal' | 'bank_transfer' | string;
+    status: "Pending" | "Paid" | "Refunded";
+    method: "credit_card" | "paypal" | "bank_transfer" | string;
     amount: number;
     tax: number;
     shipping?: number;
