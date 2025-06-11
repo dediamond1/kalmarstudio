@@ -203,6 +203,7 @@ export function CheckoutContent() {
     };
 
     try {
+      const email = useUserStore.getState().user?.email;
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: {
@@ -210,7 +211,7 @@ export function CheckoutContent() {
         },
         body: JSON.stringify({
           ...orderData,
-          customerEmail: useUserStore.getState().user?.email,
+          customerEmail: email,
         }),
       });
 
@@ -219,8 +220,15 @@ export function CheckoutContent() {
         throw new Error(data.error || "Failed to create order");
       }
 
-      const result = response?.json();
-      console.log("Checkout.tsx", result);
+      const { order } = await response.json();
+      setOrderId(
+        `${email?.substring(0, 3)}-${order._id.toString().substring(order._id.length - 8, order._id.length)}`
+      );
+      console.log(
+        "Order created with ID:",
+        `${email?.substring(0, 3)}-${order._id.toString().substring(order._id.length - 8, order._id.length)}`
+      );
+      setShowSuccessOrderModal(true);
 
       return true;
     } catch (error) {
@@ -408,7 +416,12 @@ export function CheckoutContent() {
       <CheckoutSuccessModal
         open={showSuccessOrderModal}
         onOpenChange={setShowSuccessOrderModal}
-        orderId={`ORDER-${orderId}`}
+        orderId={orderId.toLocaleUpperCase()}
+        shippingDetail={
+          selectedShippingMethod === "standard"
+            ? "3-5 business days"
+            : "1-2 business days"
+        }
       />
     </div>
   );

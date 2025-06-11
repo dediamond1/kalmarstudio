@@ -9,12 +9,14 @@ interface CheckoutSuccessModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   orderId: string;
+  shippingDetail: string;
 }
 
 export function CheckoutSuccessModal({
   open,
   onOpenChange,
   orderId,
+  shippingDetail,
 }: CheckoutSuccessModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -40,7 +42,7 @@ export function CheckoutSuccessModal({
               <div>
                 <h3 className="font-medium">Shipping Details</h3>
                 <p className="text-sm text-muted-foreground">
-                  Your order will be shipped within 1-2 business days
+                  Your order will be shipped within {shippingDetail}
                 </p>
               </div>
             </div>
