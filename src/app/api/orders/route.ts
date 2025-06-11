@@ -3,17 +3,42 @@ import { connectToDB } from "@/lib/mongoose";
 import Order from "../../../models/order";
 import mongoose from "mongoose";
 
+export async function GET(request: Request) {
+  try {
+    await connectToDB();
+
+    const { searchParams } = new URL(request.url);
+    const email = searchParams.get("email");
+
+    if (!email) {
+      return NextResponse.json(
+        { error: "Email parameter is required" },
+        { status: 400 }
+      );
+    }
+
+    const orders = await Order.find({ customerEmail: email })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return NextResponse.json({ orders });
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch orders" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: Request) {
   try {
     await connectToDB();
     if (mongoose.connection.readyState !== 1) {
       throw new Error("Failed to connect to database");
     }
-    console.log("Connected to DB");
 
     const body = await request.json();
-    console.log("Request body:", body);
-
     const {
       items,
       shippingAddress,
@@ -23,7 +48,6 @@ export async function POST(request: Request) {
       customerEmail,
     } = body;
 
-    // Validate required fields
     if (
       !items ||
       !shippingAddress ||
@@ -31,15 +55,12 @@ export async function POST(request: Request) {
       !payment ||
       !customerEmail
     ) {
-      console.error("Missing required fields");
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    console.log("Creating new order...");
-    // Create new order
     const newOrder = await Order.create({
       customerEmail,
       items,

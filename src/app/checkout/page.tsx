@@ -32,7 +32,7 @@ interface Address {
 
 export function CheckoutContent() {
   const [clientSecret, setClientSecret] = useState("");
-  const { items } = useCartStore();
+  const { items, clearCart } = useCartStore();
   const { toast } = useToast();
   const total = items.reduce(
     (sum, item) =>
@@ -228,8 +228,27 @@ export function CheckoutContent() {
         "Order created with ID:",
         `${email?.substring(0, 3)}-${order._id.toString().substring(order._id.length - 8, order._id.length)}`
       );
-      setShowSuccessOrderModal(true);
 
+      // Clear the cart after successful order
+      clearCart();
+
+      // Explicitly delete cart from DB
+      try {
+        const email = useUserStore.getState().user?.email;
+        if (email) {
+          await fetch("/api/cart", {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email }),
+          });
+        }
+      } catch (error) {
+        console.error("Failed to delete cart from DB:", error);
+      }
+
+      setShowSuccessOrderModal(true);
       return true;
     } catch (error) {
       console.error("Order creation error:", error);
