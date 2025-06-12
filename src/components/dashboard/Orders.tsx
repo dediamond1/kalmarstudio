@@ -13,7 +13,6 @@ interface OrdersProps {
 
 export default function Orders({ orders = [], loading = false }: OrdersProps) {
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
-  console.log("Orders", orders);
 
   useEffect(() => {
     setFilteredOrders(orders);
@@ -37,6 +36,34 @@ export default function Orders({ orders = [], loading = false }: OrdersProps) {
   // Handle refresh
   const handleRefresh = () => {
     console.log("Would refresh orders");
+  };
+
+  const onUpdateStatus = async (id: string, status: string) => {
+    try {
+      const response = await fetch(`/api/orders/${id}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id, status }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update status");
+      }
+
+      const { order: updatedOrder } = await response.json();
+
+      // Update local orders state
+      setFilteredOrders((prev) =>
+        prev.map((order) =>
+          order._id === updatedOrder._id ? updatedOrder : order
+        )
+      );
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      console.error("Failed to update order status:", error);
+    }
   };
 
   return (
@@ -68,6 +95,7 @@ export default function Orders({ orders = [], loading = false }: OrdersProps) {
         orders={filteredOrders}
         loading={loading}
         onOrderDelete={handleDelete}
+        onStatusUpdate={onUpdateStatus}
       />
     </div>
   );

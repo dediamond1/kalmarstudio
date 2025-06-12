@@ -11,17 +11,29 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { MoreVertical } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+} from "@/components/ui/dropdown-menu";
 
 interface OrdersTableProps {
   orders: Order[];
   loading: boolean;
   onOrderDelete: (orderId: string) => void;
+  onStatusUpdate: (orderId: string, status: string) => void;
 }
 
 export function OrdersTable({
   orders,
   loading,
   onOrderDelete,
+  onStatusUpdate,
 }: OrdersTableProps) {
   if (loading) {
     return <div>Loading orders...</div>;
@@ -32,11 +44,11 @@ export function OrdersTable({
   }
 
   const statusVariant = {
-    pending: "destructive",
-    processing: "secondary",
-    completed: "default",
-    shipped: "secondary",
-    cancelled: "destructive",
+    Pending: "destructive",
+    Processing: "secondary",
+    Completed: "default",
+    Shipped: "secondary",
+    Cancelled: "destructive",
   } as const;
 
   return (
@@ -71,13 +83,33 @@ export function OrdersTable({
               ${order.payment?.amount?.toFixed(2) || "0.00"}
             </TableCell>
             <TableCell>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onOrderDelete(order._id)}
-              >
-                Delete
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => onOrderDelete(order._id)}>
+                    Delete
+                  </DropdownMenuItem>
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                      Update Status
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent>
+                      {Object.keys(statusVariant).map((status) => (
+                        <DropdownMenuItem
+                          key={status}
+                          onClick={() => onStatusUpdate(order._id, status)}
+                        >
+                          {status}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </TableCell>
           </TableRow>
         ))}
