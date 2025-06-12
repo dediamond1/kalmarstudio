@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { OrderStatsCards } from "./order-stats-cards";
 import { OrdersFilters } from "./orders-filters";
 import { OrdersTable } from "./orders-table";
@@ -12,7 +12,13 @@ interface OrdersProps {
 }
 
 export default function Orders({ orders = [], loading = false }: OrdersProps) {
-  const [filteredOrders, setFilteredOrders] = useState<Order[]>(orders);
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
+  console.log("Orders", orders);
+
+  useEffect(() => {
+    setFilteredOrders(orders);
+    return () => {};
+  }, [orders]);
 
   // Calculate stats for the cards
   const stats = {

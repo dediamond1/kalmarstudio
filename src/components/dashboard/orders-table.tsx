@@ -55,7 +55,8 @@ export function OrdersTable({
         {orders.map((order) => (
           <TableRow key={order._id}>
             <TableCell className="font-medium">
-              #{order._id.toString().slice(-6).toUpperCase()}
+              #{order.customerEmail?.slice(0, 3).toUpperCase()}-
+              {order._id.toString().slice(-6).toUpperCase()}
             </TableCell>
             <TableCell>{order.customerEmail || "No email"}</TableCell>
             <TableCell>
