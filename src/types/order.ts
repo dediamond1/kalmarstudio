@@ -58,7 +58,19 @@ export interface Order {
   tax: number;
   shippingCost: number;
   total: number;
-  status: "pending" | "processing" | "completed" | "shipped" | "cancelled";
+  status:
+    | "pending"
+    | "confirmed"
+    | "processing"
+    | "prepared"
+    | "shipped"
+    | "transit"
+    | "delivery"
+    | "delivered"
+    | "failed_attempt"
+    | "returned_to_sender"
+    | "cancelled"
+    | "refunded";
   paymentMethod: string;
   design?: DesignDetails;
   payment?: PaymentDetails;

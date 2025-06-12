@@ -24,7 +24,7 @@ export default function Orders({ orders = [], loading = false }: OrdersProps) {
     total: orders.length,
     pending: orders.filter((o) => o.status === "pending").length,
     processing: orders.filter((o) => o.status === "processing").length,
-    completed: orders.filter((o) => o.status === "completed").length,
+    delivered: orders.filter((o) => o.status === "delivered").length,
     value: orders.reduce((sum, order) => sum + order.total, 0).toFixed(2),
   };
 
@@ -40,12 +40,13 @@ export default function Orders({ orders = [], loading = false }: OrdersProps) {
 
   const onUpdateStatus = async (id: string, status: string) => {
     try {
+      const normalizedStatus = status.toLowerCase().replace(/\s+/g, "_");
       const response = await fetch(`/api/orders/${id}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ id, status }),
+        body: JSON.stringify({ id, status: normalizedStatus }),
       });
 
       if (!response.ok) {
@@ -77,7 +78,7 @@ export default function Orders({ orders = [], loading = false }: OrdersProps) {
         total={stats.total}
         pending={stats.pending}
         processing={stats.processing}
-        completed={stats.completed}
+        completed={stats.delivered}
         value={stats.value}
       />
 

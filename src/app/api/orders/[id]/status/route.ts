@@ -5,10 +5,18 @@ import mongoose from "mongoose";
 
 const validStatuses = [
   "pending",
+  "confirmed",
   "processing",
-  "completed",
+  "prepared",
   "shipped",
+  "transit",
+  "delivery",
+  "delivered",
+  "out_for_delivery",
+  "failed_attempt",
+  "returned_to_sender",
   "cancelled",
+  "refunded",
 ] as const;
 
 import { NextRequest } from "next/server";

@@ -44,11 +44,18 @@ export function OrdersTable({
   }
 
   const statusVariant = {
-    Pending: "destructive",
-    Processing: "secondary",
-    Completed: "default",
-    Shipped: "secondary",
-    Cancelled: "destructive",
+    pending: "secondary",
+    confirmed: "default",
+    processing: "default",
+    prepared: "default",
+    shipped: "default",
+    transit: "default",
+    delivery: "default",
+    delivered: "outline",
+    failed_attempt: "destructive",
+    returned_to_sender: "destructive",
+    cancelled: "destructive",
+    refunded: "outline",
   } as const;
 
   return (
@@ -98,10 +105,28 @@ export function OrdersTable({
                       Update Status
                     </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent>
-                      {Object.keys(statusVariant).map((status) => (
+                      {[
+                        "Pending",
+                        "Confirmed",
+                        "Processing",
+                        "Prepared",
+                        "Shipped",
+                        "In Transit",
+                        "Out for Delivery",
+                        "Delivered",
+                        "Failed Attempt",
+                        "Returned to Sender",
+                        "Cancelled",
+                        "Refunded",
+                      ].map((status) => (
                         <DropdownMenuItem
                           key={status}
-                          onClick={() => onStatusUpdate(order._id, status)}
+                          onClick={() =>
+                            onStatusUpdate(
+                              order._id,
+                              status.toLowerCase().replace(/\s+/g, "_")
+                            )
+                          }
                         >
                           {status}
                         </DropdownMenuItem>
