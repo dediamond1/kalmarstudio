@@ -9,8 +9,22 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const email = searchParams.get("email");
+    const id = searchParams.get("id");
 
-    if (email) {
+    if (id) {
+      // Return single order by ID
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return NextResponse.json(
+          { error: "Invalid ID format" },
+          { status: 400 }
+        );
+      }
+      const order = await Order.findById(id).lean();
+      if (!order) {
+        return NextResponse.json({ error: "Order not found" }, { status: 404 });
+      }
+      return NextResponse.json({ order });
+    } else if (email) {
       // Return orders filtered by email if provided
       const orders = await Order.find({ customerEmail: email })
         .sort({ createdAt: -1 })

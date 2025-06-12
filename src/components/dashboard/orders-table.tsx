@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { Order } from "@/types/order";
+import { OrderDetail } from "./order-detail";
 import {
   Table,
   TableBody,
@@ -35,6 +37,7 @@ export function OrdersTable({
   onOrderDelete,
   onStatusUpdate,
 }: OrdersTableProps) {
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   if (loading) {
     return <div>Loading orders...</div>;
   }
@@ -59,86 +62,104 @@ export function OrdersTable({
   } as const;
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Order ID</TableHead>
-          <TableHead>Customer</TableHead>
-          <TableHead>Date</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Total</TableHead>
-          <TableHead>Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {orders.map((order) => (
-          <TableRow key={order._id}>
-            <TableCell className="font-medium">
-              #{order.customerEmail?.slice(0, 3).toUpperCase()}-
-              {order._id.toString().slice(-6).toUpperCase()}
-            </TableCell>
-            <TableCell>{order.customerEmail || "No email"}</TableCell>
-            <TableCell>
-              {new Date(order.createdAt).toLocaleDateString()}
-            </TableCell>
-            <TableCell>
-              <Badge variant={statusVariant[order.status]}>
-                {order.status}
-              </Badge>
-            </TableCell>
-            <TableCell>
-              ${order.payment?.amount?.toFixed(2) || "0.00"}
-            </TableCell>
-            <TableCell>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onOrderDelete(order._id)}>
-                    Delete
-                  </DropdownMenuItem>
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                      Update Status
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent>
-                      {[
-                        "Pending",
-                        "Confirmed",
-                        "Processing",
-                        "Prepared",
-                        "Shipped",
-                        "In Transit",
-                        "Out for Delivery",
-                        "Delivered",
-                        "Failed Attempt",
-                        "Returned to Sender",
-                        "Cancelled",
-                        "Refunded",
-                      ].map((status) => (
-                        <DropdownMenuItem
-                          key={status}
-                          onClick={() =>
-                            onStatusUpdate(
-                              order._id,
-                              status.toLowerCase().replace(/\s+/g, "_")
-                            )
-                          }
-                        >
-                          {status}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TableCell>
+    <>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Order ID</TableHead>
+            <TableHead>Customer</TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Total</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {orders.map((order) => (
+            <TableRow
+              key={order._id}
+              className="cursor-pointer hover:bg-gray-50"
+              onClick={() => setSelectedOrder(order)}
+            >
+              <TableCell className="font-medium">
+                #{order.customerEmail?.slice(0, 3).toUpperCase()}-
+                {order._id.toString().slice(-6).toUpperCase()}
+              </TableCell>
+              <TableCell>{order.customerEmail || "No email"}</TableCell>
+              <TableCell>
+                {new Date(order.createdAt).toLocaleDateString()}
+              </TableCell>
+              <TableCell>
+                <Button
+                  variant="link"
+                  className="p-0 h-auto"
+                  onClick={() =>
+                    window.open(`/api/orders?id=${order._id}`, "_blank")
+                  }
+                >
+                  <Badge variant={statusVariant[order.status]}>
+                    {order.status}
+                  </Badge>
+                </Button>
+              </TableCell>
+              <TableCell>
+                ${order.payment?.amount?.toFixed(2) || "0.00"}
+              </TableCell>
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onOrderDelete(order._id)}>
+                      Delete
+                    </DropdownMenuItem>
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        Update Status
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        {[
+                          "Pending",
+                          "Confirmed",
+                          "Processing",
+                          "Prepared",
+                          "Shipped",
+                          "In Transit",
+                          "Out for Delivery",
+                          "Delivered",
+                          "Failed Attempt",
+                          "Returned to Sender",
+                          "Cancelled",
+                          "Refunded",
+                        ].map((status) => (
+                          <DropdownMenuItem
+                            key={status}
+                            onClick={() =>
+                              onStatusUpdate(
+                                order._id,
+                                status.toLowerCase().replace(/\s+/g, "_")
+                              )
+                            }
+                          >
+                            {status}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <OrderDetail
+        order={selectedOrder}
+        onClose={() => setSelectedOrder(null)}
+      />
+    </>
   );
 }
