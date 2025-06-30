@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -42,7 +43,7 @@ export function OrdersFilters({
   };
 
   return (
-    <div className="space-y-4 flex flex-col md:flex-row justify-between items-center">
+    <div className="flex md:flex-row flex-col justify-between items-center space-y-4">
       <div className="flex items-center gap-4">
         <Input
           placeholder="Search orders..."
@@ -59,11 +60,13 @@ export function OrdersFilters({
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Orders</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="processing">Processing</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
+            <SelectGroup>
+              <SelectItem value="all">All Orders</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="processing">Processing</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectGroup>
           </SelectContent>
         </Select>
       </div>

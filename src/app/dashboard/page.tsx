@@ -38,7 +38,7 @@ export default function DashboardPage() {
   return (
     <div>
       <div className="mt-6 xl:mt-12">
-        <div className="flex flex-wrap justify-center gap-6 h-full w-full relative">
+        <div className="relative flex flex-wrap justify-center gap-6 w-full h-full">
           {/* Sales */}
           <CardItem title="Sales" value={0} />
 
@@ -92,12 +92,12 @@ const CardItem = ({
       className={`w-[18%] flex flex-col justify-between border ${getCardStyle()}`}
     >
       <CardHeader>
-        <CardTitle className="text-md font-medium text-gray-700">
+        <CardTitle className="font-medium text-gray-700 text-md">
           {title}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-4xl font-bold text-gray-800">{value}</div>
+        <div className="font-bold text-gray-800 text-4xl">{value}</div>
       </CardContent>
     </Card>
   );

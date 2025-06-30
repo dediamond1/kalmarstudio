@@ -68,9 +68,9 @@ export default function Orders({ orders = [], loading = false }: OrdersProps) {
   };
 
   return (
-    <div className="px-14 py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Orders</h1>
+    <div className="space-y-6 px-14 py-6">
+      <div className="flex justify-between items-center">
+        <h1 className="font-bold text-2xl">Orders</h1>
       </div>
 
       {/* Stats Cards */}

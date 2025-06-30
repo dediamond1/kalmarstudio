@@ -2,9 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { X, ShoppingCart } from "lucide-react";
-import { useEffect, useState } from "react";
+import {  useState } from "react";
 import { authClient } from "@/lib/auth-client";
-import { useUserStore } from "@/store/user";
 import { useCartStore } from "@/store/cart";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -19,6 +18,7 @@ import Container from "./ui/Container";
 import { HiOutlineMenu } from "react-icons/hi";
 import LogoImage from "./ui/LogoImage";
 import Link from "next/link";
+import { User } from "better-auth";
 
 const navLinks = [
   { name: "Products", href: "/products" },
@@ -26,34 +26,17 @@ const navLinks = [
   { name: "Contact", href: "/contact" },
 ];
 
-export default function Header() {
+export default function Header({
+  user,
+}: {
+  user: User | null;
+}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, fetchUserByEmail, clearUser } = useUserStore();
   const [isLoggedIn, setIsLoggedIn] = useState(!!user);
 
-  useEffect(() => {
-    const checkAuthState = async () => {
-      try {
-        const { data: session, error } = await authClient.getSession();
-        if (error) {
-          setIsLoggedIn(false);
-          return;
-        }
-        if (session?.user?.email) {
-          await fetchUserByEmail(session.user.email);
-          setIsLoggedIn(true);
-        }
-      } catch {
-        setIsLoggedIn(false);
-      }
-    };
-
-    checkAuthState();
-  }, [fetchUserByEmail]);
 
   const handleLogout = async () => {
     await authClient.signOut();
-    clearUser();
     useCartStore.getState().clearCart();
     setIsLoggedIn(false);
     setMobileMenuOpen(false);
@@ -61,7 +44,7 @@ export default function Header() {
 
   return (
     <Container>
-      <div className="flex items-center justify-between py-4">
+      <div className="flex justify-between items-center py-4">
         <div className="flex items-center">
           <Link href="/" className="flex items-center space-x-2">
             <LogoImage />
@@ -74,7 +57,7 @@ export default function Header() {
             <a
               key={link.href}
               href={link.href}
-              className="text-lg font-semibold text-[#00000099] hover:text-primary"
+              className="font-semibold text-[#00000099] hover:text-primary text-lg"
             >
               {link.name}
             </a>
@@ -108,7 +91,7 @@ export default function Header() {
                 </DropdownMenu>
                 <Link href="/cart">
                   <Button variant="ghost" size="icon" className="relative">
-                    <ShoppingCart className="h-5 w-5" />
+                    <ShoppingCart className="w-5 h-5" />
                     <CartCount />
                   </Button>
                 </Link>
@@ -140,7 +123,7 @@ export default function Header() {
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
           <div
-            className="fixed inset-0 z-40 bg-black/50 md:hidden"
+            className="md:hidden z-40 fixed inset-0 bg-black/50"
             onClick={() => setMobileMenuOpen(false)}
           >
             <div
@@ -151,13 +134,13 @@ export default function Header() {
               )}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="container px-4 py-6">
+              <div className="px-4 py-6 container">
                 <nav className="flex flex-col space-y-4">
                   {navLinks.map((link) => (
                     <a
                       key={link.href}
                       href={link.href}
-                      className="text-lg font-medium py-2 hover:text-primary transition-colors"
+                      className="py-2 font-medium hover:text-primary text-lg transition-colors"
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       {link.name}
@@ -167,11 +150,11 @@ export default function Header() {
                     <>
                       <Link
                         href="/cart"
-                        className="flex items-center justify-center py-2"
+                        className="flex justify-center items-center py-2"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         <Button variant="ghost" className="w-full">
-                          <ShoppingCart className="h-5 w-5 mr-2" />
+                          <ShoppingCart className="mr-2 w-5 h-5" />
                           Cart
                           <CartCount className="ml-2" />
                         </Button>
@@ -212,11 +195,11 @@ export default function Header() {
                       </DropdownMenu>
                       <Link
                         href="/cart"
-                        className="flex items-center justify-center py-2"
+                        className="flex justify-center items-center py-2"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         <Button variant="ghost" className="w-full">
-                          <ShoppingCart className="h-5 w-5 mr-2" />
+                          <ShoppingCart className="mr-2 w-5 h-5" />
                           Cart
                           <CartCount className="ml-2" />
                         </Button>
@@ -226,14 +209,14 @@ export default function Header() {
                     <>
                       <Button
                         variant="outline"
-                        className="w-full mt-4"
+                        className="mt-4 w-full"
                         asChild
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         <Link href="/auth/login">Login</Link>
                       </Button>
                       <Button
-                        className="w-full mt-2"
+                        className="mt-2 w-full"
                         asChild
                         onClick={() => setMobileMenuOpen(false)}
                       >

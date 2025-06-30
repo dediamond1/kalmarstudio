@@ -1,10 +1,8 @@
-"use client";
+
 import "./globals.css";
 import "../values/css-variables.scss";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
-import Header from "@/components/header";
-import { usePathname } from "next/navigation";
 import { Providers } from "./providers";
 
 const geistSans = Geist({
@@ -22,8 +20,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const pathname = usePathname();
-  const isDashboard = pathname?.startsWith("/dashboard") ?? false;
+
 
   return (
     <html lang="en">
@@ -31,7 +28,6 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          {!isDashboard && <Header />}
           {children}
         </Providers>
         <Toaster
